@@ -3,12 +3,41 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from './I18nProvider';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+const SIDEBAR_KEY = 'sidebar-open';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { t, locale, toggleLocale } = useI18n();
   const pathname = usePathname();
-  const [open, setOpen] = useState(true);
+
+  // Persist sidebar state in localStorage
+  const [open, setOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(SIDEBAR_KEY);
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_KEY, String(open));
+  }, [open]);
+
+  // Close sidebar on mobile when navigating
+  useEffect(() => {
+    if (isMobile) setOpen(false);
+  }, [pathname, isMobile]);
+
+  const toggleSidebar = useCallback(() => setOpen((p) => !p), []);
 
   const isStellarium = pathname === '/stellarium';
 
@@ -21,11 +50,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="fixed inset-0 flex bg-[#0d1117] text-slate-100 overflow-hidden">
+      {/* Mobile backdrop */}
+      {open && isMobile && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`flex-shrink-0 h-full z-40 transition-all duration-300 ${
           open ? 'w-64' : 'w-0'
-        } ${isStellarium ? 'absolute left-0 top-0' : 'relative'}`}
+        } ${isStellarium || isMobile ? 'absolute left-0 top-0' : 'relative'}`}
       >
         <div
           className={`h-full w-64 bg-[#161b22]/95 backdrop-blur-md border-r border-white/10 flex flex-col overflow-hidden transition-transform duration-300 ${
@@ -46,7 +83,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {t.langToggle}
               </button>
               <button
-                onClick={() => setOpen(false)}
+                onClick={toggleSidebar}
                 className="p-1 hover:bg-white/15 rounded transition"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,7 +121,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Hamburger (when sidebar closed) */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={toggleSidebar}
           className="fixed top-3 left-3 z-50 p-2 bg-black/60 hover:bg-black/80 rounded-lg text-white transition backdrop-blur-sm"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +133,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main
         className={`flex-1 overflow-auto relative ${
-          isStellarium ? 'p-0' : 'p-0'
+          isStellarium ? 'p-0' : 'p-0 md:pl-0'
         }`}
       >
         {children}

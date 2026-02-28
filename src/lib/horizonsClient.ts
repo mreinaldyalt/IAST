@@ -139,7 +139,6 @@ export async function queryHorizons(
     setCache(key, resultStr);
     return { result: resultStr, source: 'live' };
   } catch (err) {
-    releaseSemaphore();
     console.warn('HORIZONS live failed, falling back to mock:', (err as Error).message);
     return queryMock(params, key);
   } finally {
@@ -226,7 +225,9 @@ function generateMockResult(
     const ljd = lower.jd || lower.epoch || 0;
     const ujd = upper.jd || upper.epoch || 0;
     const span = ujd - ljd;
-    const frac = span > 0 ? (jd - ljd) / span : 0;
+    const rawFrac = span > 0 ? (jd - ljd) / span : 0;
+    // Clamp frac to [0, 1] to prevent wild extrapolation outside mock data range
+    const frac = Math.max(0, Math.min(1, rawFrac));
     const interpolated = lower.values.map((v, idx) =>
       v + (upper.values[idx] - v) * frac
     );

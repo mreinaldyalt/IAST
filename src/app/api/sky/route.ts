@@ -37,9 +37,13 @@ export async function GET(request: NextRequest) {
     const sun = sunRes.results[0] || { az: 0, el: 0, source: 'mock' };
     const moon = moonRes.results[0] || { az: 0, el: 0, source: 'mock' };
 
+    // Normalize: az → [0, 360), el → [-90, 90]
+    const normAz = (v: number) => ((v % 360) + 360) % 360;
+    const clampEl = (v: number) => Math.max(-90, Math.min(90, v));
+
     return NextResponse.json({
-      sun: { az: sun.az, el: sun.el, source: sun.source },
-      moon: { az: moon.az, el: moon.el, source: moon.source },
+      sun: { az: normAz(sun.az), el: clampEl(sun.el), source: sun.source },
+      moon: { az: normAz(moon.az), el: clampEl(moon.el), source: moon.source },
       datetimeUTC: utcDate.toISOString(),
       datetimeLocal,
       lat,
