@@ -49,7 +49,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="fixed inset-0 flex bg-[#0d1117] text-slate-100 overflow-hidden">
+    <div className="fixed inset-0 flex cosmic-bg text-slate-100 overflow-hidden">
+      {/* Starfield background layer */}
+      <div className="starfield" />
       {/* Mobile backdrop */}
       {open && isMobile && (
         <div
@@ -62,15 +64,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <aside
         className={`flex-shrink-0 h-full z-40 transition-all duration-300 ${
           open ? 'w-64' : 'w-0'
-        } ${isStellarium || isMobile ? 'absolute left-0 top-0' : 'relative'}`}
+        } absolute left-0 top-0`}
       >
         <div
-          className={`h-full w-64 bg-[#161b22]/95 backdrop-blur-md border-r border-white/10 flex flex-col overflow-hidden transition-transform duration-300 ${
+          className={`h-full w-64 bg-[#0b1026]/95 backdrop-blur-xl border-r border-white/[0.08] flex flex-col overflow-hidden transition-transform duration-300 ${
             open ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-900/40 to-purple-900/30">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-gradient-to-r from-indigo-950/60 to-purple-950/40">
             <span className="text-sm font-bold tracking-tight truncate">
               🌙 {t.siteName}
             </span>
@@ -122,7 +124,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!open && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-3 left-3 z-50 p-2 bg-black/60 hover:bg-black/80 rounded-lg text-white transition backdrop-blur-sm"
+          className="fixed top-3 left-3 z-50 p-2 bg-[#0b1026]/80 hover:bg-[#0b1026] rounded-lg text-white transition backdrop-blur-xl border border-white/[0.08]"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -132,8 +134,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main
-        className={`flex-1 overflow-auto relative ${
-          isStellarium ? 'p-0' : 'p-0 md:pl-0'
+        className={`flex-1 overflow-auto relative z-[1] ${
+          isStellarium ? 'p-0' : ''
         }`}
       >
         {children}

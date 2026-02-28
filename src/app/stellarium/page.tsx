@@ -45,6 +45,20 @@ function dateToMJD(d: Date): number {
   return d.getTime() / 86400000 + 40587;
 }
 
+function fmtTime(dt: string): string {
+  try {
+    const d = new Date(dt);
+    return d.toTimeString().slice(0, 8);
+  } catch { return '--:--:--'; }
+}
+
+function fmtDate(dt: string): string {
+  try {
+    const d = new Date(dt);
+    return d.toISOString().slice(0, 10);
+  } catch { return '----/--/--'; }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
@@ -68,9 +82,13 @@ function StellariumPage() {
   const [engineLoaded, setEngineLoaded] = useState(false);
   const [engineError, setEngineError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [playSpeed, setPlaySpeed] = useState(0);
+  const [playSpeed, setPlaySpeed] = useState(1); // autoplay realtime
   const [cityQuery, setCityQuery] = useState('');
   const [timeSliderValue, setTimeSliderValue] = useState(0);
+  const [showAtmo, setShowAtmo] = useState(true);
+  const [showGrid, setShowGrid] = useState(false);
+  const [showLandscape, setShowLandscape] = useState(true);
+  const [locationName, setLocationName] = useState('');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stelRef = useRef<unknown>(null);
@@ -116,10 +134,10 @@ function StellariumPage() {
     }
   }, [lat, lon, tz]);
 
-  // Debounced fetch on datetime change — throttle to max ~3 req/sec
+  // Debounced fetch on datetime change — throttle
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    const delay = playSpeed > 0 ? 600 : 300;
+    const delay = playSpeed > 0 ? 350 : 250;
     debounceRef.current = setTimeout(() => fetchSky(datetime), delay);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [datetime, fetchSky, playSpeed]);
@@ -154,6 +172,19 @@ function StellariumPage() {
       }
     } catch { /* engine API may vary */ }
   }, [lat, lon, datetime]);
+
+  // ---------- sync engine rendering flags ---------------------------
+  useEffect(() => {
+    if (!stelRef.current) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const core = (stelRef.current as any).core;
+      if (!core) return;
+      if (core.atmosphere) core.atmosphere.visible = showAtmo;
+      if (core.landscapes) core.landscapes.visible = showLandscape;
+      if (core.lines && core.lines.equatorial) core.lines.equatorial.visible = showGrid;
+    } catch { /* engine API may vary */ }
+  }, [showAtmo, showLandscape, showGrid]);
 
   // ---------- load Stellarium engine --------------------------------
   useEffect(() => {
@@ -211,7 +242,7 @@ function StellariumPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- helpers -----------------------------------------------
-  function setNow() { setPlaySpeed(0); setTimeSliderValue(0); setDatetime(new Date().toISOString().slice(0, 19)); }
+  function setNow() { setPlaySpeed(1); setTimeSliderValue(0); setDatetime(new Date().toISOString().slice(0, 19)); }
   function adjustTime(deltaMins: number) {
     setPlaySpeed(0);
     const d = new Date(datetime);
@@ -227,8 +258,20 @@ function StellariumPage() {
         { headers: { 'User-Agent': 'IslamicAstronomicalStudies/1.0' } }
       );
       const data = await res.json();
-      if (data.length > 0) { setLat(parseFloat(data[0].lat)); setLon(parseFloat(data[0].lon)); }
+      if (data.length > 0) {
+        setLat(parseFloat(data[0].lat));
+        setLon(parseFloat(data[0].lon));
+        setLocationName(data[0].display_name?.split(',')[0] || cityQuery);
+      }
     } catch { /* ignore */ }
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
   }
 
   // ---------- render -----------------------------------------------
@@ -254,35 +297,65 @@ function StellariumPage() {
         </div>
       )}
 
-      {/* NASA Sun/Moon overlay markers */}
+      {/* NASA Sun/Moon overlay markers — pointer-events-none so canvas is interactive */}
       {skyData && <NasaOverlayMarkers skyData={skyData} t={t} />}
 
-      {/* Top-right compact NASA readout */}
+      {/* Top-right compact NASA readout — pointer-events-none */}
       {skyData && (
-        <div className="absolute top-3 right-3 z-20 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 text-[11px] font-mono text-white/80 space-y-0.5">
+        <div className="absolute top-3 right-3 z-20 pointer-events-none bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 text-[11px] font-mono text-white/80 space-y-0.5">
           <div className="text-yellow-300">&#9728; {t.sunLabel}: Az {skyData.sun.az.toFixed(2)}&deg; El {skyData.sun.el.toFixed(2)}&deg;</div>
           <div className="text-blue-200">&#9790; {t.moonLabel}: Az {skyData.moon.az.toFixed(2)}&deg; El {skyData.moon.el.toFixed(2)}&deg;</div>
           {showLoading && <div className="text-yellow-400 animate-pulse text-[9px]">&#9203; NASA...</div>}
         </div>
       )}
 
-      {/* Bottom status bar — like stellarium-web.org */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-sm text-[11px] font-mono">
-        <div className="text-green-400">{t.stellariumLabel}</div>
-        <div className="flex items-center gap-3 text-white/60">
-          <span>{engineLoaded ? 'Stellarium Engine \u2713' : engineError ? 'Engine Error' : 'Loading...'}</span>
-          <span className="text-white/40">|</span>
-          <span>{skyData?.sun.source === 'mock' ? 'MOCK' : 'LIVE'}</span>
-          <span className="text-white/40">|</span>
-          <span>{datetime.replace('T', ' ')}</span>
+      {/* ─── Bottom Bar — stellarium-web.org style ──────────────── */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+        <div className="flex items-center justify-between px-4 py-2 bg-black/60 backdrop-blur-sm text-white">
+          {/* Left: Location */}
+          <div className="flex items-center gap-2 text-[11px] font-mono text-white/60 pointer-events-auto">
+            <span className="text-green-400/80">📍</span>
+            <span>{locationName || `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`}</span>
+            <span className="text-white/20">|</span>
+            <span className="text-white/40">{tz}</span>
+          </div>
+
+          {/* Center: Large time display */}
+          <div className="flex flex-col items-center pointer-events-auto">
+            <div className="text-2xl font-mono font-bold tracking-wider tabular-nums">
+              {fmtTime(datetime)}
+            </div>
+            <div className="text-[10px] text-white/40 font-mono">
+              {fmtDate(datetime)}
+            </div>
+          </div>
+
+          {/* Right: Status + playback indicator */}
+          <div className="flex items-center gap-3 text-[11px] font-mono text-white/50 pointer-events-auto">
+            <span className={`flex items-center gap-1 ${playSpeed > 0 ? 'text-green-400' : 'text-white/40'}`}>
+              {playSpeed > 0 ? '▶' : '⏸'} {playSpeed > 0 ? `${playSpeed}×` : 'Paused'}
+            </span>
+            <span className="text-white/20">|</span>
+            <span>{engineLoaded ? '✓ Engine' : engineError ? '✗ Error' : '⟳'}</span>
+            <span className="text-white/20">|</span>
+            <span>{skyData?.sun.source === 'mock' ? 'MOCK' : 'LIVE'}</span>
+          </div>
         </div>
+      </div>
+
+      {/* ─── Toolbar — left side vertical icons ─────────────────── */}
+      <div className="absolute bottom-14 left-3 z-20 flex flex-col gap-1">
+        <ToolbarBtn active={showAtmo} onClick={() => setShowAtmo(v => !v)} title="Atmosphere" icon="🌤" />
+        <ToolbarBtn active={showLandscape} onClick={() => setShowLandscape(v => !v)} title="Landscape" icon="🏔" />
+        <ToolbarBtn active={showGrid} onClick={() => setShowGrid(v => !v)} title="Equatorial Grid" icon="🔲" />
+        <ToolbarBtn active={false} onClick={toggleFullscreen} title="Fullscreen" icon="⛶" />
       </div>
 
       {/* LEFT SIDEBAR — Stellarium-style controls */}
       {sidebarOpen && (
-        <div className="absolute top-0 left-0 h-full z-30 w-72 bg-black/60 backdrop-blur-md border-r border-white/10 overflow-y-auto flex flex-col">
+        <div className="absolute top-0 left-0 h-full z-30 w-72 bg-[#0b1020] border-r border-white/[0.08] overflow-y-auto flex flex-col">
           {/* Panel header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
             <span className="text-sm font-bold text-white/90">&#128301; {t.menu2}</span>
             <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-white/15 rounded transition text-white/60 hover:text-white">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,17 +427,17 @@ function StellariumPage() {
               <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider">Playback</div>
               <div className="flex items-center gap-1">
                 <button onClick={() => setPlaySpeed(0)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 0 ? 'bg-red-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>&#9208;</button>
-                <button onClick={() => setPlaySpeed(1)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 1 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>1x</button>
-                <button onClick={() => setPlaySpeed(60)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 60 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>60x</button>
-                <button onClick={() => setPlaySpeed(3600)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 3600 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>3600x</button>
+                <button onClick={() => setPlaySpeed(1)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 1 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>1×</button>
+                <button onClick={() => setPlaySpeed(60)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 60 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>60×</button>
+                <button onClick={() => setPlaySpeed(300)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 300 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>300×</button>
               </div>
-              {playSpeed > 0 && <div className="text-[10px] text-green-400/80 animate-pulse">&#9654; Playing at {playSpeed}x</div>}
+              {playSpeed > 0 && <div className="text-[10px] text-green-400/80 animate-pulse">&#9654; Playing at {playSpeed}×</div>}
             </div>
 
-            {/* Time slider — controlled with actual state */}
+            {/* Time slider — ±12h, step=5 minutes */}
             <div className="space-y-1">
-              <div className="text-[10px] text-white/30">&plusmn;12h slider</div>
-              <input type="range" min={-720} max={720} step={1}
+              <div className="text-[10px] text-white/30">&plusmn;12h slider (5 min steps)</div>
+              <input type="range" min={-720} max={720} step={5}
                 value={timeSliderValue}
                 onChange={(e) => {
                   const newVal = parseInt(e.target.value);
@@ -419,6 +492,26 @@ function StellariumPage() {
         </button>
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Toolbar Button                                                     */
+/* ------------------------------------------------------------------ */
+
+function ToolbarBtn({ active, onClick, title, icon }: { active: boolean; onClick: () => void; title: string; icon: string }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm transition backdrop-blur-sm ${
+        active
+          ? 'bg-blue-600/50 text-white border border-blue-400/30'
+          : 'bg-black/40 text-white/50 hover:bg-black/60 hover:text-white/80 border border-white/5'
+      }`}
+    >
+      {icon}
+    </button>
   );
 }
 

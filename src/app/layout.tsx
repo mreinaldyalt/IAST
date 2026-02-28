@@ -16,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body className="min-h-screen bg-[#0d1117] text-slate-100 antialiased">
+      <body className="min-h-screen cosmic-bg text-slate-100 antialiased">
         <I18nProvider>
           <AppShell>{children}</AppShell>
         </I18nProvider>

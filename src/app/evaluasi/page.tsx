@@ -49,14 +49,14 @@ export default function EvaluasiPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-indigo-300 mb-4">📊 {t.evalTitle}</h1>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-4">📊 {t.evalTitle}</h1>
       <p className="text-slate-400 mb-6">{t.evalDesc}</p>
 
       <button
         onClick={runEvaluation}
         disabled={loading}
-        className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 transition-all shadow-lg shadow-indigo-500/20"
       >
         {loading ? '...' : t.runEval}
       </button>
@@ -86,9 +86,9 @@ export default function EvaluasiPage() {
             </div>
           </div>
 
-          <div className="bg-[#161b22] rounded-xl border border-white/10 overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <table className="w-full">
-              <thead className="bg-indigo-900/20">
+              <thead className="bg-indigo-950/30">
                 <tr>
                   <th className="px-4 py-3 text-left text-slate-400">{t.year}</th>
                   <th className="px-4 py-3 text-left text-slate-400">{t.predicted}</th>

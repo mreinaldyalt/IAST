@@ -6,10 +6,10 @@ export default function AboutPage() {
   const { t } = useI18n();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-indigo-300 mb-6">ℹ️ {t.aboutTitle}</h1>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">ℹ️ {t.aboutTitle}</h1>
 
-      <div className="bg-[#161b22] rounded-xl border border-white/10 p-6 mb-6">
+      <div className="glass-card p-6 mb-6">
         <p className="text-slate-300 leading-relaxed mb-6">{t.aboutText}</p>
 
         <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">

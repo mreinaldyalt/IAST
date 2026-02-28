@@ -118,11 +118,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-indigo-300 mb-6">🌙 {t.menu1}</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">🌙 {t.menu1}</h1>
 
       {/* Form */}
-      <div className="bg-[#161b22] rounded-xl border border-white/10 p-6 mb-8">
+      <div className="glass-card p-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Year */}
           <div>
@@ -210,7 +210,7 @@ export default function HomePage() {
         <button
           onClick={computePrediction}
           disabled={loading}
-          className="mt-6 w-full py-3 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors text-lg"
+          className="mt-6 w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 transition-all text-lg shadow-lg shadow-indigo-500/20"
         >
           {loading ? t.computing : t.computeBtn}
         </button>
@@ -228,8 +228,8 @@ export default function HomePage() {
       {result && (
         <>
           {/* Main results card */}
-          <div className="bg-[#161b22] rounded-xl border border-white/10 p-6 mb-6">
-            <h2 className="text-2xl font-bold text-indigo-300 mb-4">{t.resultsTitle}</h2>
+          <div className="glass-card p-6 mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent mb-4">{t.resultsTitle}</h2>
 
             <div className="bg-indigo-900/30 rounded-lg p-4 mb-4">
               <div className="text-sm text-slate-400">{t.dataSource}</div>
@@ -274,7 +274,7 @@ export default function HomePage() {
           </div>
 
           {/* NASA Panel */}
-          <div className="bg-[#161b22] rounded-xl border border-white/10 p-6 mb-6">
+          <div className="glass-card p-6 mb-6">
             <h2 className="text-xl font-bold text-blue-300 mb-4">🛰️ {t.nasaPanelTitle}</h2>
             <div className="mb-4">
               <h3 className="font-semibold text-slate-300 mb-2">{t.requestParams}</h3>
@@ -296,13 +296,13 @@ export default function HomePage() {
           </div>
 
           {/* Explanation */}
-          <div className="bg-[#161b22] rounded-xl border border-white/10 p-6 mb-6">
+          <div className="glass-card p-6 mb-6">
             <h2 className="text-xl font-bold text-slate-200 mb-3">📖 {t.explanationTitle}</h2>
             <p className="text-slate-400 leading-relaxed">{t.explanation}</p>
           </div>
 
           {/* Newton-Raphson Audit */}
-          <div className="bg-[#161b22] rounded-xl border border-white/10 p-6 mb-6">
+          <div className="glass-card p-6 mb-6">
             <h2 className="text-xl font-bold text-purple-300 mb-4">🔬 {t.nrAuditTitle}</h2>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -356,7 +356,7 @@ export default function HomePage() {
           {/* Open Stellarium button */}
           <button
             onClick={openStellarium}
-            className="w-full py-4 bg-indigo-700 text-white font-bold rounded-xl hover:bg-indigo-800 transition-colors text-lg shadow-md"
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all text-lg shadow-lg shadow-indigo-500/20"
           >
             🔭 {t.openStellarium}
           </button>

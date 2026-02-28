@@ -1,1 +1,132 @@
 @import "tailwindcss";
+
+/* ─── Design Tokens ──────────────────────────────────────── */
+:root {
+  --bg-deep:     #050a18;
+  --bg-card:     rgba(255, 255, 255, 0.03);
+  --border-card: rgba(255, 255, 255, 0.08);
+  --glass-blur:  16px;
+}
+
+/* ─── Cosmic Background ─────────────────────────────────── */
+.cosmic-bg {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(88, 28, 135, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(30, 58, 138, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 1) 0%, var(--bg-deep) 100%);
+}
+
+/* ─── Starfield Layer (pure CSS, no JS needed) ───────────── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.starfield::before,
+.starfield::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+/* ~120 tiny stars via box-shadow */
+.starfield::before {
+  box-shadow:
+    25vw 8vh 0 0.4px rgba(255,255,255,.45),
+    72vw 15vh 0 0.3px rgba(255,255,255,.35),
+    10vw 28vh 0 0.5px rgba(255,255,255,.5),
+    55vw 5vh 0 0.3px rgba(255,255,255,.3),
+    90vw 22vh 0 0.4px rgba(255,255,255,.4),
+    35vw 42vh 0 0.3px rgba(255,255,255,.35),
+    80vw 38vh 0 0.5px rgba(255,255,255,.55),
+    15vw 55vh 0 0.4px rgba(255,255,255,.3),
+    60vw 48vh 0 0.3px rgba(255,255,255,.4),
+    42vw 62vh 0 0.5px rgba(255,255,255,.5),
+    88vw 58vh 0 0.3px rgba(255,255,255,.35),
+    5vw 72vh 0 0.4px rgba(255,255,255,.45),
+    68vw 68vh 0 0.3px rgba(255,255,255,.3),
+    32vw 78vh 0 0.5px rgba(255,255,255,.5),
+    95vw 75vh 0 0.4px rgba(255,255,255,.4),
+    22vw 88vh 0 0.3px rgba(255,255,255,.35),
+    78vw 85vh 0 0.5px rgba(255,255,255,.55),
+    50vw 92vh 0 0.4px rgba(255,255,255,.3),
+    12vw 95vh 0 0.3px rgba(255,255,255,.4),
+    65vw 3vh 0 0.4px rgba(255,255,255,.45),
+    38vw 18vh 0 0.3px rgba(255,255,255,.3),
+    82vw 12vh 0 0.5px rgba(255,255,255,.5),
+    48vw 35vh 0 0.3px rgba(255,255,255,.35),
+    18vw 45vh 0 0.4px rgba(255,255,255,.4),
+    92vw 42vh 0 0.3px rgba(255,255,255,.3),
+    28vw 58vh 0 0.5px rgba(255,255,255,.55),
+    75vw 52vh 0 0.4px rgba(255,255,255,.45),
+    8vw 65vh 0 0.3px rgba(255,255,255,.35),
+    58vw 72vh 0 0.5px rgba(255,255,255,.5),
+    40vw 85vh 0 0.4px rgba(255,255,255,.4),
+    85vw 92vh 0 0.3px rgba(255,255,255,.3),
+    52vw 25vh 0 0.4px rgba(255,255,255,.45),
+    3vw 38vh 0 0.5px rgba(255,255,255,.5),
+    70vw 30vh 0 0.3px rgba(255,255,255,.35),
+    45vw 50vh 0 0.4px rgba(255,255,255,.4),
+    20vw 68vh 0 0.3px rgba(255,255,255,.3),
+    62vw 82vh 0 0.5px rgba(255,255,255,.55),
+    30vw 95vh 0 0.4px rgba(255,255,255,.45),
+    97vw 10vh 0 0.3px rgba(255,255,255,.35),
+    2vw 50vh 0 0.5px rgba(255,255,255,.5);
+  animation: twinkle 8s ease-in-out infinite alternate;
+}
+.starfield::after {
+  box-shadow:
+    15vw 12vh 0 0.3px rgba(255,255,255,.3),
+    45vw 8vh 0 0.5px rgba(255,255,255,.5),
+    78vw 20vh 0 0.4px rgba(255,255,255,.4),
+    30vw 32vh 0 0.3px rgba(255,255,255,.35),
+    62vw 28vh 0 0.5px rgba(255,255,255,.55),
+    8vw 42vh 0 0.4px rgba(255,255,255,.45),
+    88vw 35vh 0 0.3px rgba(255,255,255,.3),
+    52vw 55vh 0 0.5px rgba(255,255,255,.5),
+    22vw 48vh 0 0.4px rgba(255,255,255,.4),
+    72vw 62vh 0 0.3px rgba(255,255,255,.35),
+    38vw 70vh 0 0.5px rgba(255,255,255,.55),
+    95vw 65vh 0 0.4px rgba(255,255,255,.45),
+    12vw 78vh 0 0.3px rgba(255,255,255,.3),
+    58vw 85vh 0 0.5px rgba(255,255,255,.5),
+    82vw 90vh 0 0.4px rgba(255,255,255,.4),
+    42vw 95vh 0 0.3px rgba(255,255,255,.35),
+    68vw 45vh 0 0.5px rgba(255,255,255,.55),
+    25vw 15vh 0 0.4px rgba(255,255,255,.45),
+    55vw 38vh 0 0.3px rgba(255,255,255,.3),
+    85vw 52vh 0 0.5px rgba(255,255,255,.5),
+    18vw 82vh 0 0.4px rgba(255,255,255,.4),
+    75vw 95vh 0 0.3px rgba(255,255,255,.35),
+    5vw 22vh 0 0.4px rgba(255,255,255,.45),
+    48vw 75vh 0 0.3px rgba(255,255,255,.3),
+    92vw 88vh 0 0.5px rgba(255,255,255,.5),
+    35vw 5vh 0 0.4px rgba(255,255,255,.4),
+    65vw 58vh 0 0.3px rgba(255,255,255,.35),
+    10vw 90vh 0 0.5px rgba(255,255,255,.55),
+    50vw 18vh 0 0.4px rgba(255,255,255,.45),
+    28vw 65vh 0 0.3px rgba(255,255,255,.3);
+  animation: twinkle 10s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes twinkle {
+  0%   { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* ─── Glass Card Utility ─────────────────────────────────── */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-card);
+  border-radius: 1rem;
+}
+
+/* ─── Scrollbar styling ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
