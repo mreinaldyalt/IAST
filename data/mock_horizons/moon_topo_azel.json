@@ -1,0 +1,20 @@
+{
+  "description": "Mock Moon topocentric AZ/EL for Bekasi. Conjunction ~JD 2462150.7 (Jan 14). At sunset Jan 14 (~JD 2462150.96) moon should be above horizon.",
+  "body": "Moon",
+  "center": "coord@399 (Bekasi -6.2383, 106.9756)",
+  "quantity": "4 (AZ/EL)",
+  "entries": [
+    { "jd": 2462149.96, "values": [281.0, -4.500] },
+    { "jd": 2462150.00, "values": [282.0, -8.200] },
+    { "jd": 2462150.46, "values": [283.5, 2.100] },
+    { "jd": 2462150.50, "values": [284.0, 38.500] },
+    { "jd": 2462150.70, "values": [285.0, 8.200] },
+    { "jd": 2462150.96, "values": [286.5, 3.800] },
+    { "jd": 2462151.00, "values": [287.0, 1.200] },
+    { "jd": 2462151.46, "values": [289.0, 8.500] },
+    { "jd": 2462151.50, "values": [289.5, 42.000] },
+    { "jd": 2462151.96, "values": [291.5, 12.300] },
+    { "jd": 2462152.00, "values": [292.0, 5.600] },
+    { "jd": 2462152.46, "values": [294.0, 15.800] }
+  ]
+}

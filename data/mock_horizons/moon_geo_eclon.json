@@ -1,0 +1,33 @@
+{
+  "description": "Mock Moon geocentric ecliptic longitude for conjunction search (2029 Ramadan). Moon moves ~13 deg/day. Conjunction (moon passes sun) occurs around JD 2462150.7 = 2029-Jan-14 ~04:48 UTC.",
+  "body": "Moon",
+  "center": "500@399",
+  "quantity": "31 (ObsEcLon)",
+  "entries": [
+    { "jd": 2462147.00, "values": [257.000] },
+    { "jd": 2462147.25, "values": [260.250] },
+    { "jd": 2462147.50, "values": [263.500] },
+    { "jd": 2462147.75, "values": [266.750] },
+    { "jd": 2462148.00, "values": [270.000] },
+    { "jd": 2462148.25, "values": [273.250] },
+    { "jd": 2462148.50, "values": [276.500] },
+    { "jd": 2462148.75, "values": [279.750] },
+    { "jd": 2462149.00, "values": [283.000] },
+    { "jd": 2462149.25, "values": [286.250] },
+    { "jd": 2462149.50, "values": [289.500] },
+    { "jd": 2462149.75, "values": [292.100] },
+    { "jd": 2462150.00, "values": [294.000] },
+    { "jd": 2462150.25, "values": [295.300] },
+    { "jd": 2462150.50, "values": [296.600] },
+    { "jd": 2462150.75, "values": [297.400] },
+    { "jd": 2462151.00, "values": [299.800] },
+    { "jd": 2462151.25, "values": [302.200] },
+    { "jd": 2462151.50, "values": [304.600] },
+    { "jd": 2462151.75, "values": [307.000] },
+    { "jd": 2462152.00, "values": [309.400] },
+    { "jd": 2462152.25, "values": [311.800] },
+    { "jd": 2462152.50, "values": [314.200] },
+    { "jd": 2462152.75, "values": [316.600] },
+    { "jd": 2462153.00, "values": [319.000] }
+  ]
+}
