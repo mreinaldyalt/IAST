@@ -1,0 +1,9 @@
+creator_did     = ivo://swe/landscape/guereins
+obs_title       = Guereins
+type            = landscape
+hips_tile_format = png webp jpeg
+hips_order       = 0
+hips_tile_width  = 64
+hips_status      = public master clonableOnce
+hips_frame       = planet
+dataproduct_type = image

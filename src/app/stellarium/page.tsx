@@ -89,6 +89,8 @@ function StellariumPage() {
   const [showGrid, setShowGrid] = useState(false);
   const [showLandscape, setShowLandscape] = useState(true);
   const [locationName, setLocationName] = useState('');
+  const [clickedObj, setClickedObj] = useState<{ name: string; id: string; designations: string[]; alt?: number; az?: number } | null>(null);
+  const [show3DModal, setShow3DModal] = useState<'sun' | 'moon' | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stelRef = useRef<unknown>(null);
@@ -221,6 +223,67 @@ function StellariumPage() {
               core.landscapes?.addDataSource?.({ url: dataBase + 'landscapes/guereins', key: 'guereins' });
               core.milkyway?.addDataSource?.({ url: dataBase + 'surveys/milkyway' });
             } catch { /* Non-critical */ }
+            // Register click handler for object selection
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const Module = (window as any).Module || stel;
+              const onFn = Module?.on || Module?.["on"];
+              if (typeof onFn === 'function') {
+                onFn.call(Module, "click", () => {
+                  try {
+                    const sel = core.selection;
+                    if (!sel) {
+                      setClickedObj(null);
+                      setShow3DModal(null);
+                      return 0;
+                    }
+                    const desigs: string[] = typeof sel.designations === 'function'
+                      ? sel.designations()
+                      : [];
+                    const objId: string = sel.id || desigs[0] || 'Unknown';
+                    const name = desigs[0] || objId;
+
+                    let alt: number | undefined;
+                    let az: number | undefined;
+                    try {
+                      const azalt = sel.getInfo('azalt');
+                      if (azalt) {
+                        az = azalt[0] * 180 / Math.PI;
+                        alt = azalt[1] * 180 / Math.PI;
+                      }
+                    } catch { /* getInfo may fail for some objects */ }
+
+                    setClickedObj({ name, id: objId, designations: desigs, alt, az });
+
+                    // Determine if Sun or Moon for 3D modal
+                    const lower = name.toLowerCase();
+                    const allDesigs = desigs.join(' ').toLowerCase();
+                    if (lower.includes('sun') || allDesigs.includes('sun') || objId === 'Sun') {
+                      setShow3DModal('sun');
+                    } else if (lower.includes('moon') || allDesigs.includes('moon') || objId === 'Moon') {
+                      setShow3DModal('moon');
+                    } else {
+                      setShow3DModal(null);
+                    }
+                  } catch (e) {
+                    if (process.env.NODE_ENV === 'development') {
+                      console.error('[SWE click handler]', e);
+                    }
+                  }
+                  return 0;
+                });
+              }
+            } catch (e) {
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('[SWE] Could not register click handler:', e);
+              }
+            }
+            // Dev: verify landscape data availability
+            if (process.env.NODE_ENV === 'development') {
+              fetch('/vendor/stellarium/data/landscapes/guereins/properties', { method: 'HEAD' })
+                .then(r => { if (!r.ok) console.warn('[SWE] Landscape properties missing (404). Ground may not render.'); })
+                .catch(() => {});
+            }
             // Set initial observer
             try {
               const obs = core.observer;
@@ -299,6 +362,63 @@ function StellariumPage() {
 
       {/* NASA Sun/Moon overlay markers — pointer-events-none so canvas is interactive */}
       {skyData && <NasaOverlayMarkers skyData={skyData} t={t} />}
+
+      {/* ─── Object Click Popup ──────────────────────────────── */}
+      {clickedObj && (
+        <div className="absolute top-14 right-3 z-30 bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-4 min-w-[220px] shadow-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-bold text-white">{clickedObj.name}</span>
+            <button onClick={() => { setClickedObj(null); setShow3DModal(null); }}
+              className="text-white/40 hover:text-white text-lg leading-none">&times;</button>
+          </div>
+          {clickedObj.designations.length > 1 && (
+            <div className="text-[10px] text-white/40 mb-1">
+              {clickedObj.designations.join(', ')}
+            </div>
+          )}
+          {clickedObj.alt !== undefined && clickedObj.az !== undefined && (
+            <div className="text-xs font-mono text-white/60 space-y-0.5">
+              <div>Alt: {clickedObj.alt.toFixed(2)}&deg;</div>
+              <div>Az: {clickedObj.az.toFixed(2)}&deg;</div>
+            </div>
+          )}
+          {show3DModal && (
+            <button
+              onClick={() => setShow3DModal(show3DModal)}
+              className="mt-2 w-full px-3 py-1.5 bg-indigo-600/60 hover:bg-indigo-500/60 rounded text-xs text-white font-bold transition"
+            >
+              🌐 View 3D {show3DModal === 'sun' ? 'Sun' : 'Moon'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ─── 3D Model Modal ─────────────────────────────────── */}
+      {show3DModal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+             onClick={() => setShow3DModal(null)}>
+          <div className="bg-[#0b1020] border border-white/20 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl"
+               onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">
+                {show3DModal === 'sun' ? '☀️ Sun — 3D View' : '🌙 Moon — 3D View'}
+              </h3>
+              <button onClick={() => setShow3DModal(null)}
+                className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
+            </div>
+            <div className="w-full aspect-square bg-black/50 rounded-xl overflow-hidden border border-white/10">
+              <model-viewer
+                src={show3DModal === 'sun' ? '/assets/3d/Stars/sun.glb' : '/assets/3d/Satellite/moon.glb'}
+                alt={show3DModal === 'sun' ? 'Sun 3D model' : 'Moon 3D model'}
+                auto-rotate
+                camera-controls
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+            <p className="text-xs text-white/30 mt-2 text-center">Drag to rotate • Scroll to zoom</p>
+          </div>
+        </div>
+      )}
 
       {/* Top-right compact NASA readout — pointer-events-none */}
       {skyData && (

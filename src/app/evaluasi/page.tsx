@@ -6,8 +6,8 @@ import { useI18n } from '@/components/I18nProvider';
 interface EvalItem {
   year: number;
   predicted: string | null;
-  actual: string;
-  status: 'OK' | 'FAIL' | 'SKIPPED';
+  actual: string | null;
+  status: 'OK' | 'FAIL' | 'SKIPPED' | 'NO_GROUND_TRUTH';
   note?: string;
 }
 
@@ -16,7 +16,10 @@ interface EvalResult {
   totalOk: number;
   totalFail: number;
   totalSkipped: number;
+  totalNoGroundTruth?: number;
   accuracy: string;
+  fromYear?: number;
+  toYear?: number;
   note?: string;
 }
 
@@ -25,6 +28,8 @@ export default function EvaluasiPage() {
   const [result, setResult] = useState<EvalResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fromYear, setFromYear] = useState(2025);
+  const [toYear, setToYear] = useState(2029);
 
   async function runEvaluation() {
     setLoading(true);
@@ -33,7 +38,7 @@ export default function EvaluasiPage() {
       const resp = await fetch('/api/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ predictions: {} }),
+        body: JSON.stringify({ fromYear, toYear }),
       });
       const data = await resp.json();
       if (data.error) {
@@ -52,6 +57,20 @@ export default function EvaluasiPage() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-4">📊 {t.evalTitle}</h1>
       <p className="text-slate-400 mb-6">{t.evalDesc}</p>
+
+      {/* Year range inputs */}
+      <div className="flex items-center gap-3 mb-4">
+        <div>
+          <label className="text-xs text-slate-500 block mb-1">From Year</label>
+          <input type="number" value={fromYear} onChange={e => setFromYear(parseInt(e.target.value) || 2025)}
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white w-24 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label className="text-xs text-slate-500 block mb-1">To Year</label>
+          <input type="number" value={toYear} onChange={e => setToYear(parseInt(e.target.value) || 2029)}
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded text-sm text-white w-24 focus:outline-none focus:border-indigo-500" />
+        </div>
+      </div>
 
       <button
         onClick={runEvaluation}
@@ -101,7 +120,7 @@ export default function EvaluasiPage() {
                   <tr key={item.year} className="border-b border-white/5 hover:bg-indigo-900/10">
                     <td className="px-4 py-2 text-slate-300">{item.year}</td>
                     <td className="px-4 py-2 font-mono text-sm text-slate-400">{item.predicted || '-'}</td>
-                    <td className="px-4 py-2 font-mono text-sm text-slate-300">{item.actual}</td>
+                    <td className="px-4 py-2 font-mono text-sm text-slate-300">{item.actual || '-'}</td>
                     <td className="px-4 py-2">
                       <span
                         className={`px-2 py-1 rounded text-xs font-bold ${
@@ -109,11 +128,14 @@ export default function EvaluasiPage() {
                             ? 'bg-green-900/30 text-green-400'
                             : item.status === 'FAIL'
                             ? 'bg-red-900/30 text-red-400'
+                            : item.status === 'NO_GROUND_TRUTH'
+                            ? 'bg-yellow-900/30 text-yellow-400'
                             : 'bg-white/5 text-slate-500'
                         }`}
                       >
-                        {item.status}
+                        {item.status === 'NO_GROUND_TRUTH' ? 'NO GT' : item.status}
                       </span>
+                      {item.note && <span className="ml-2 text-[10px] text-slate-500">{item.note}</span>}
                     </td>
                   </tr>
                 ))}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { predictRamadan } from '@/lib/ramadanFromSyaban';
+import { predictRamadanMulti } from '@/lib/ramadanFromSyaban';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,8 +16,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await predictRamadan(year, lat, lon, tz);
-    return NextResponse.json(result);
+    const multi = await predictRamadanMulti(year, lat, lon, tz);
+
+    // Build response: backward-compatible top-level fields from primary + new multi fields
+    const response: Record<string, unknown> = {
+      year: multi.year,
+      results: multi.results,
+      warnings: multi.warnings,
+    };
+
+    // Backward compatibility: spread primary result fields at top level if exists
+    if (multi.primary) {
+      Object.assign(response, multi.primary);
+    }
+
+    return NextResponse.json(response);
   } catch (err) {
     console.error('Predict error:', err);
     return NextResponse.json(
