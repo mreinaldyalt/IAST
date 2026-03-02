@@ -89,7 +89,7 @@ function StellariumPage() {
   const [showGrid, setShowGrid] = useState(false);
   const [showLandscape, setShowLandscape] = useState(true);
   const [locationName, setLocationName] = useState('');
-  const [clickedObj, setClickedObj] = useState<{ name: string; id: string; designations: string[]; alt?: number; az?: number } | null>(null);
+  const [clickedObj, setClickedObj] = useState<{ name: string; id: string; designations: string[]; alt?: number; az?: number; objType?: 'sun' | 'moon' } | null>(null);
   const [show3DModal, setShow3DModal] = useState<'sun' | 'moon' | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -261,16 +261,16 @@ function StellariumPage() {
 
                     setClickedObj({ name, id: objId, designations: desigs, alt, az });
 
-                    // Determine if Sun or Moon for 3D modal
+                    // Identify Sun or Moon for potential 3D view button in popup
                     const lower = name.toLowerCase();
                     const allDesigs = desigs.join(' ').toLowerCase();
+                    let objType: 'sun' | 'moon' | undefined;
                     if (lower.includes('sun') || allDesigs.includes('sun') || objId === 'Sun') {
-                      setShow3DModal('sun');
+                      objType = 'sun';
                     } else if (lower.includes('moon') || allDesigs.includes('moon') || objId === 'Moon') {
-                      setShow3DModal('moon');
-                    } else {
-                      setShow3DModal(null);
+                      objType = 'moon';
                     }
+                    setClickedObj({ name, id: objId, designations: desigs, alt, az, objType });
                   } catch (e) {
                     if (process.env.NODE_ENV === 'development') {
                       console.error('[SWE click handler]', e);
@@ -388,12 +388,12 @@ function StellariumPage() {
               <div>Az: {clickedObj.az.toFixed(2)}&deg;</div>
             </div>
           )}
-          {show3DModal && (
+          {clickedObj.objType && (
             <button
-              onClick={() => setShow3DModal(show3DModal)}
+              onClick={() => setShow3DModal(clickedObj.objType!)}
               className="mt-2 w-full px-3 py-1.5 bg-indigo-600/60 hover:bg-indigo-500/60 rounded text-xs text-white font-bold transition"
             >
-              View 3D {show3DModal === 'sun' ? 'Sun' : 'Moon'}
+              View 3D {clickedObj.objType === 'sun' ? 'Sun' : 'Moon'}
             </button>
           )}
         </div>
