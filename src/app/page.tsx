@@ -58,6 +58,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<PredictionData | null>(null);
+  const [multiResults, setMultiResults] = useState<PredictionData[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [cityResults, setCityResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
 
   async function searchCity() {
@@ -88,6 +90,8 @@ export default function HomePage() {
     setLoading(true);
     setError('');
     setResult(null);
+    setMultiResults([]);
+    setWarnings([]);
     try {
       const resp = await fetch(
         `/api/predict?year=${year}&lat=${lat}&lon=${lon}&tz=${encodeURIComponent(tz)}`
@@ -97,6 +101,8 @@ export default function HomePage() {
         setError(data.error);
       } else {
         setResult(data);
+        if (Array.isArray(data.results)) setMultiResults(data.results);
+        if (Array.isArray(data.warnings)) setWarnings(data.warnings);
       }
     } catch (e) {
       setError((e as Error).message);
@@ -227,6 +233,30 @@ export default function HomePage() {
       {/* Results */}
       {result && (
         <>
+          {/* Warnings */}
+          {warnings.length > 0 && (
+            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 mb-4">
+              <h3 className="font-bold text-yellow-300 text-sm mb-1">Warnings</h3>
+              {warnings.map((w, i) => (
+                <p key={i} className="text-yellow-200/80 text-xs">{w}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Multiple Ramadans notice */}
+          {multiResults.length > 1 && (
+            <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4 mb-4">
+              <h3 className="font-bold text-indigo-300 text-sm mb-1">
+                {multiResults.length} Ramadan found in Gregorian year {year}
+              </h3>
+              <ul className="text-indigo-200/80 text-xs space-y-1 mt-1">
+                {multiResults.map((r, i) => (
+                  <li key={i}>Ramadan {i + 1}: starts {r.ramadan1LocalDate}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Main results card */}
           <div className="glass-card p-6 mb-6">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent mb-4">{t.resultsTitle}</h2>
