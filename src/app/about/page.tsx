@@ -7,7 +7,7 @@ export default function AboutPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">ℹ️ {t.aboutTitle}</h1>
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">{t.aboutTitle}</h1>
 
       <div className="glass-card p-6 mb-6">
         <p className="text-slate-300 leading-relaxed mb-6">{t.aboutText}</p>

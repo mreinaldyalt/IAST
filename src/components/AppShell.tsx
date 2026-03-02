@@ -42,10 +42,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isStellarium = pathname === '/stellarium';
 
   const navItems = [
-    { href: '/', label: t.menu1, icon: '🌙' },
-    { href: '/stellarium', label: t.menu2, icon: '🔭' },
-    { href: '/evaluasi', label: t.evaluation, icon: '📊' },
-    { href: '/about', label: t.about, icon: 'ℹ️' },
+    { href: '/', label: t.menu1 },
+    { href: '/stellarium', label: t.menu2 },
+    { href: '/evaluasi', label: t.evaluation },
+    { href: '/about', label: t.about },
   ];
 
   return (
@@ -64,7 +64,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <aside
         className={`flex-shrink-0 h-full z-40 transition-all duration-300 ${
           open ? 'w-64' : 'w-0'
-        } absolute left-0 top-0`}
+        } ${isMobile ? 'fixed left-0 top-0' : 'relative'}`}
       >
         <div
           className={`h-full w-64 bg-[#0b1026]/95 backdrop-blur-xl border-r border-white/[0.08] flex flex-col overflow-hidden transition-transform duration-300 ${
@@ -74,7 +74,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-gradient-to-r from-indigo-950/60 to-purple-950/40">
             <span className="text-sm font-bold tracking-tight truncate">
-              🌙 {t.siteName}
+              {t.siteName}
             </span>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
@@ -107,7 +107,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
                 <span>{item.label}</span>
               </Link>
             ))}

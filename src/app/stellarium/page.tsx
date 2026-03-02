@@ -95,7 +95,6 @@ function StellariumPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stelRef = useRef<unknown>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const playRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
   const fetchIdRef = useRef(0);
@@ -144,19 +143,26 @@ function StellariumPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [datetime, fetchSky, playSpeed]);
 
-  // ---------- play/pause time progression ---------------------------
+  // ---------- play/pause time progression (smooth rAF-based) --------
   useEffect(() => {
-    if (playRef.current) clearInterval(playRef.current);
-    if (playSpeed > 0) {
-      playRef.current = setInterval(() => {
+    if (playSpeed <= 0) return;
+    let lastTs: number | null = null;
+    let rafId: number;
+    const tick = (ts: number) => {
+      if (lastTs !== null) {
+        const deltaSec = (ts - lastTs) / 1000;  // real elapsed seconds
+        const simDelta = deltaSec * playSpeed;   // simulated seconds to advance
         setDatetime((prev) => {
           const d = new Date(prev);
-          d.setSeconds(d.getSeconds() + playSpeed);
+          d.setMilliseconds(d.getMilliseconds() + simDelta * 1000);
           return d.toISOString().slice(0, 19);
         });
-      }, 1000);
-    }
-    return () => { if (playRef.current) clearInterval(playRef.current); };
+      }
+      lastTs = ts;
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [playSpeed]);
 
   // ---------- sync engine observer when time/location changes -------
@@ -387,7 +393,7 @@ function StellariumPage() {
               onClick={() => setShow3DModal(show3DModal)}
               className="mt-2 w-full px-3 py-1.5 bg-indigo-600/60 hover:bg-indigo-500/60 rounded text-xs text-white font-bold transition"
             >
-              🌐 View 3D {show3DModal === 'sun' ? 'Sun' : 'Moon'}
+              View 3D {show3DModal === 'sun' ? 'Sun' : 'Moon'}
             </button>
           )}
         </div>
@@ -401,7 +407,7 @@ function StellariumPage() {
                onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">
-                {show3DModal === 'sun' ? '☀️ Sun — 3D View' : '🌙 Moon — 3D View'}
+                {show3DModal === 'sun' ? 'Sun — 3D View' : 'Moon — 3D View'}
               </h3>
               <button onClick={() => setShow3DModal(null)}
                 className="text-white/40 hover:text-white text-xl leading-none">&times;</button>
@@ -423,9 +429,9 @@ function StellariumPage() {
       {/* Top-right compact NASA readout — pointer-events-none */}
       {skyData && (
         <div className="absolute top-3 right-3 z-20 pointer-events-none bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 text-[11px] font-mono text-white/80 space-y-0.5">
-          <div className="text-yellow-300">&#9728; {t.sunLabel}: Az {skyData.sun.az.toFixed(2)}&deg; El {skyData.sun.el.toFixed(2)}&deg;</div>
-          <div className="text-blue-200">&#9790; {t.moonLabel}: Az {skyData.moon.az.toFixed(2)}&deg; El {skyData.moon.el.toFixed(2)}&deg;</div>
-          {showLoading && <div className="text-yellow-400 animate-pulse text-[9px]">&#9203; NASA...</div>}
+          <div className="text-yellow-300">{t.sunLabel}: Az {skyData.sun.az.toFixed(2)}&deg; El {skyData.sun.el.toFixed(2)}&deg;</div>
+          <div className="text-blue-200">{t.moonLabel}: Az {skyData.moon.az.toFixed(2)}&deg; El {skyData.moon.el.toFixed(2)}&deg;</div>
+          {showLoading && <div className="text-yellow-400 animate-pulse text-[9px]">Loading NASA...</div>}
         </div>
       )}
 
@@ -434,7 +440,7 @@ function StellariumPage() {
         <div className="flex items-center justify-between px-4 py-2 bg-black/60 backdrop-blur-sm text-white">
           {/* Left: Location */}
           <div className="flex items-center gap-2 text-[11px] font-mono text-white/60 pointer-events-auto">
-            <span className="text-green-400/80">📍</span>
+            <span className="text-green-400/80">&#9679;</span>
             <span>{locationName || `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`}</span>
             <span className="text-white/20">|</span>
             <span className="text-white/40">{tz}</span>
@@ -465,9 +471,9 @@ function StellariumPage() {
 
       {/* ─── Toolbar — left side vertical icons ─────────────────── */}
       <div className="absolute bottom-14 left-3 z-20 flex flex-col gap-1">
-        <ToolbarBtn active={showAtmo} onClick={() => setShowAtmo(v => !v)} title="Atmosphere" icon="🌤" />
-        <ToolbarBtn active={showLandscape} onClick={() => setShowLandscape(v => !v)} title="Landscape" icon="🏔" />
-        <ToolbarBtn active={showGrid} onClick={() => setShowGrid(v => !v)} title="Equatorial Grid" icon="🔲" />
+        <ToolbarBtn active={showAtmo} onClick={() => setShowAtmo(v => !v)} title="Atmosphere" icon="A" />
+        <ToolbarBtn active={showLandscape} onClick={() => setShowLandscape(v => !v)} title="Landscape" icon="L" />
+        <ToolbarBtn active={showGrid} onClick={() => setShowGrid(v => !v)} title="Equatorial Grid" icon="G" />
         <ToolbarBtn active={false} onClick={toggleFullscreen} title="Fullscreen" icon="⛶" />
       </div>
 
@@ -476,7 +482,7 @@ function StellariumPage() {
         <div className="absolute top-0 left-0 h-full z-30 w-72 bg-[#0b1020] border-r border-white/[0.08] overflow-y-auto flex flex-col">
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
-            <span className="text-sm font-bold text-white/90">&#128301; {t.menu2}</span>
+            <span className="text-sm font-bold text-white/90">{t.menu2}</span>
             <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-white/15 rounded transition text-white/60 hover:text-white">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -503,7 +509,7 @@ function StellariumPage() {
                 onChange={(e) => setCityQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && searchCity()}
                 className="flex-1 px-2 py-1 bg-white/5 border border-white/10 rounded text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-blue-500/50" />
-              <button onClick={searchCity} className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition">&#128269;</button>
+              <button onClick={searchCity} className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition">Search</button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -551,7 +557,7 @@ function StellariumPage() {
                 <button onClick={() => setPlaySpeed(60)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 60 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>60×</button>
                 <button onClick={() => setPlaySpeed(300)} className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${playSpeed === 300 ? 'bg-green-500/60 text-white' : 'bg-white/5 hover:bg-white/15 text-white/50'}`}>300×</button>
               </div>
-              {playSpeed > 0 && <div className="text-[10px] text-green-400/80 animate-pulse">&#9654; Playing at {playSpeed}×</div>}
+              {playSpeed > 0 && <div className="text-[10px] text-green-400/80 animate-pulse">Playing at {playSpeed}&times;</div>}
             </div>
 
             {/* Time slider — ±12h, step=5 minutes */}
@@ -582,10 +588,10 @@ function StellariumPage() {
             <div className="px-4 py-3 border-b border-white/5 space-y-1">
               <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">NASA/JPL HORIZONS</div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] font-mono">
-                <span className="text-yellow-300/80">&#9728; Az</span><span className="text-white/70">{skyData.sun.az.toFixed(4)}&deg;</span>
-                <span className="text-yellow-300/80">&#9728; El</span><span className="text-white/70">{skyData.sun.el.toFixed(4)}&deg;</span>
-                <span className="text-blue-200/80">&#9790; Az</span><span className="text-white/70">{skyData.moon.az.toFixed(4)}&deg;</span>
-                <span className="text-blue-200/80">&#9790; El</span><span className="text-white/70">{skyData.moon.el.toFixed(4)}&deg;</span>
+                <span className="text-yellow-300/80">Sun Az</span><span className="text-white/70">{skyData.sun.az.toFixed(4)}&deg;</span>
+                <span className="text-yellow-300/80">Sun El</span><span className="text-white/70">{skyData.sun.el.toFixed(4)}&deg;</span>
+                <span className="text-blue-200/80">Moon Az</span><span className="text-white/70">{skyData.moon.az.toFixed(4)}&deg;</span>
+                <span className="text-blue-200/80">Moon El</span><span className="text-white/70">{skyData.moon.el.toFixed(4)}&deg;</span>
               </div>
               <div className="text-[9px] text-white/20 mt-1">
                 {t.dataSource}: {skyData.sun.source === 'mock' ? t.mockMode : t.liveMode}
@@ -691,7 +697,7 @@ const NasaOverlayMarkers = memo(function NasaOverlayMarkersInner({ skyData, t }:
             <div className="w-6 h-6 rounded-full bg-yellow-400/30 animate-pulse" />
             <div className="absolute inset-1 rounded-full bg-yellow-400" />
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-yellow-300 font-bold drop-shadow-lg">
-              &#9728; {t.sunLabel}
+              {t.sunLabel}
             </span>
           </div>
         </div>
@@ -702,7 +708,7 @@ const NasaOverlayMarkers = memo(function NasaOverlayMarkersInner({ skyData, t }:
             <div className="w-5 h-5 rounded-full bg-blue-200/20 animate-pulse" />
             <div className="absolute inset-1 rounded-full bg-blue-100" />
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-blue-200 font-bold drop-shadow-lg">
-              &#9790; {t.moonLabel}
+              {t.moonLabel}
             </span>
           </div>
         </div>

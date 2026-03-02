@@ -119,7 +119,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">🌙 {t.menu1}</h1>
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">{t.menu1}</h1>
 
       {/* Form */}
       <div className="glass-card p-6 mb-8">
@@ -153,7 +153,7 @@ export default function HomePage() {
                 onClick={searchCity}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm transition"
               >
-                🔍
+                Search
               </button>
             </div>
             {cityResults.length > 0 && (
@@ -255,27 +255,27 @@ export default function HomePage() {
               <div className={`p-3 rounded-lg ${result.ruleA ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
                 <span className="font-medium text-slate-300">{t.ruleA}:</span>{' '}
                 <span className={result.ruleA ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-                  {result.ruleA ? '✅ ' + t.fulfilled : '❌ ' + t.notFulfilled}
+                  {result.ruleA ? t.fulfilled : t.notFulfilled}
                 </span>
               </div>
               <div className={`p-3 rounded-lg ${result.ruleB ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
                 <span className="font-medium text-slate-300">{t.ruleB}:</span>{' '}
                 <span className={result.ruleB ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-                  {result.ruleB ? '✅ ' + t.fulfilled : '❌ ' + t.notFulfilled}
+                  {result.ruleB ? t.fulfilled : t.notFulfilled}
                 </span>
               </div>
             </div>
 
             {result.isBorderline && (
               <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-500/30 rounded-lg text-yellow-300 font-medium">
-                ⚠️ {t.borderlineWarning}
+                {t.borderlineWarning}
               </div>
             )}
           </div>
 
           {/* NASA Panel */}
           <div className="glass-card p-6 mb-6">
-            <h2 className="text-xl font-bold text-blue-300 mb-4">🛰️ {t.nasaPanelTitle}</h2>
+            <h2 className="text-xl font-bold text-blue-300 mb-4">{t.nasaPanelTitle}</h2>
             <div className="mb-4">
               <h3 className="font-semibold text-slate-300 mb-2">{t.requestParams}</h3>
               <div className="bg-black/30 rounded-lg p-3 font-mono text-xs overflow-x-auto text-slate-400">
@@ -297,18 +297,18 @@ export default function HomePage() {
 
           {/* Explanation */}
           <div className="glass-card p-6 mb-6">
-            <h2 className="text-xl font-bold text-slate-200 mb-3">📖 {t.explanationTitle}</h2>
+            <h2 className="text-xl font-bold text-slate-200 mb-3">{t.explanationTitle}</h2>
             <p className="text-slate-400 leading-relaxed">{t.explanation}</p>
           </div>
 
           {/* Newton-Raphson Audit */}
           <div className="glass-card p-6 mb-6">
-            <h2 className="text-xl font-bold text-purple-300 mb-4">🔬 {t.nrAuditTitle}</h2>
+            <h2 className="text-xl font-bold text-purple-300 mb-4">{t.nrAuditTitle}</h2>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div className="bg-purple-900/30 rounded-lg p-3">
                 <div className="text-xs text-slate-400">{t.converged}</div>
-                <div className="font-bold text-lg">{result.converged ? '✅' : '❌'}</div>
+                <div className="font-bold text-lg">{result.converged ? 'Yes' : 'No'}</div>
               </div>
               <div className="bg-purple-900/30 rounded-lg p-3">
                 <div className="text-xs text-slate-400">{t.totalIterations}</div>
@@ -322,7 +322,7 @@ export default function HomePage() {
               </div>
               {result.bisectionWarning && (
                 <div className="bg-yellow-900/30 rounded-lg p-3 border border-yellow-500/30">
-                  <div className="text-xs text-yellow-300 font-medium">⚠️ {t.bisectionWarning}</div>
+                  <div className="text-xs text-yellow-300 font-medium">{t.bisectionWarning}</div>
                 </div>
               )}
             </div>
@@ -358,7 +358,7 @@ export default function HomePage() {
             onClick={openStellarium}
             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all text-lg shadow-lg shadow-indigo-500/20"
           >
-            🔭 {t.openStellarium}
+            {t.openStellarium}
           </button>
         </>
       )}
