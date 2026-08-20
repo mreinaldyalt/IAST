@@ -45,12 +45,12 @@ function toLocalInput(ms: number) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-function Btn({ active, onClick, children, title }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string }) {
+function Btn({ active, onClick, children, title, wide }: { active?: boolean; onClick: () => void; children: React.ReactNode; title?: string; wide?: boolean }) {
   return (
     <button
       onClick={onClick}
       title={title}
-      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition ${
+      className={`h-7 ${wide ? 'min-w-[52px] px-2' : 'min-w-[44px] px-2'} rounded-lg text-xs font-medium border transition flex items-center justify-center gap-1 ${
         active
           ? 'bg-indigo-500/30 border-indigo-400/50 text-indigo-100'
           : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.1] hover:text-white'
@@ -89,7 +89,7 @@ function HoldButton({ delta, onStep, title, children }: {
       onPointerLeave={stop}
       onPointerCancel={stop}
       title={title}
-      className="px-2.5 py-1 rounded-lg text-xs font-medium border bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.1] hover:text-white transition select-none touch-none"
+      className="h-7 min-w-[44px] px-2 rounded-lg text-xs font-medium border bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.1] hover:text-white transition select-none touch-none flex items-center justify-center"
     >{children}</button>
   );
 }
@@ -146,7 +146,7 @@ export default function SimulationControls({
             <HoldButton delta={-HOUR} onStep={onStep} title="-1 hour (tahan untuk cepat)">−1h</HoldButton>
             <button
               onClick={onTogglePlay}
-              className="w-9 h-9 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-white flex items-center justify-center hover:bg-indigo-500/50 transition"
+              className="w-8 h-8 shrink-0 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-white flex items-center justify-center hover:bg-indigo-500/50 transition"
               title={playing ? 'Pause' : 'Play'}
             >
               {playing ? (
@@ -207,9 +207,9 @@ export default function SimulationControls({
             <Btn active={mode === 'overview'} onClick={() => onMode('overview')}>{t.ssOverview}</Btn>
             <Btn active={mode === 'scientific'} onClick={() => onMode('scientific')}>{t.ssScientific}</Btn>
           </div>
-          <Btn onClick={onReset} title={t.ssResetCamera}>
+          <Btn onClick={onReset} title={t.ssResetCamera} wide>
             <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114-3M20 15a8 8 0 01-14 3" /></svg>
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114-3M20 15a8 8 0 01-14 3" /></svg>
               {t.ssResetCamera}
             </span>
           </Btn>

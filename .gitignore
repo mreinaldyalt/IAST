@@ -35,3 +35,7 @@ next-env.d.ts
 # committed; see src/lib/officialHistory/store.ts)
 .data/
 .rawdata
+
+# Local-only reference material, not part of the deployed app
+/Google Colab/
+Git Repo.txt
