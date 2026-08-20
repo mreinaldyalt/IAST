@@ -1,41 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadGroundTruth } from '@/lib/evaluation';
 import { predictRamadanMulti } from '@/lib/ramadanFromSyaban';
+import { predictKHGTFullForGregorianYear } from '@/lib/khgtPipeline';
+import { ensureOfficialHistoryInitialized } from '@/lib/officialHistory/bootstrap';
+import { getRecord } from '@/lib/officialHistory/store';
+import { getProviderForCountry } from '@/lib/officialHistory/providers';
+import { maybeRefreshInBackground } from '@/lib/officialHistory/updater';
+import { diffCivilDays, resolveOfficialFields, OfficialStatus } from '@/lib/officialHistory/resolve';
 
-// Default evaluation location: Bekasi
-const DEFAULT_LAT = -6.2383;
-const DEFAULT_LON = 106.9756;
-const DEFAULT_TZ = 'Asia/Jakarta';
+/**
+ * GET /api/evaluate?fromYear=X&toYear=Y&lat=L&lon=L&tz=T&countryCode=CC
+ *
+ * Three independent variables per year, all optional-if-missing so a failure
+ * in any one never hides the other two:
+ *   A. khgtDate      — KHGT global witness-grid computation (predictKHGTFullForGregorianYear)
+ *   B. localDate     — Wujudul Hilal at the user's lat/lon (predictRamadanMulti)
+ *   C. officialDate  — verified government announcement for the detected country
+ *                       (officialHistory store) — null if unverified/unsupported,
+ *                       NEVER a guessed/predicted date.
+ *
+ * `countryCode` is detected client-side once per location change (see
+ * evaluasi/page.tsx + /api/geocode/reverse) and passed in here — this route
+ * does not re-detect it per year/request.
+ */
 
-interface EvalItem {
-  year: number;
-  predicted: string | null;
-  actual: string | null;
-  status: 'OK' | 'FAIL' | 'SKIPPED' | 'NO_GROUND_TRUTH';
-  note?: string;
-}
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const predictions = new Map<number, string>();
+    const { searchParams } = new URL(request.url);
+    const fromYear = parseInt(searchParams.get('fromYear') || '', 10);
+    const toYear = parseInt(searchParams.get('toYear') || '', 10);
+    const lat = parseFloat(searchParams.get('lat') || '-6.2088');
+    const lon = parseFloat(searchParams.get('lon') || '106.8456');
+    const tz = searchParams.get('tz') || 'Asia/Jakarta';
+    const countryCode = searchParams.get('countryCode');
 
-    // Accept pre-computed predictions from body
-    if (body.predictions && typeof body.predictions === 'object') {
-      for (const [k, v] of Object.entries(body.predictions)) {
-        predictions.set(parseInt(k, 10), v as string);
-      }
+    if (isNaN(fromYear) || isNaN(toYear)) {
+      return NextResponse.json(
+        { error: 'Missing parameters: fromYear, toYear required' },
+        { status: 400 }
+      );
     }
-
-    const gt = loadGroundTruth();
-
-    // Determine year range: use body params or fall back to GT range
-    const gtYears = gt.map(e => e.year);
-    const defaultFrom = gtYears.length > 0 ? Math.min(...gtYears) : new Date().getFullYear();
-    const defaultTo = gtYears.length > 0 ? Math.max(...gtYears) : new Date().getFullYear();
-
-    const fromYear = typeof body.fromYear === 'number' ? body.fromYear : defaultFrom;
-    const toYear = typeof body.toYear === 'number' ? body.toYear : defaultTo;
 
     if (fromYear > toYear) {
       return NextResponse.json(
@@ -44,85 +47,123 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Auto-compute missing predictions
-    const lat = body.lat ?? DEFAULT_LAT;
-    const lon = body.lon ?? DEFAULT_LON;
-    const tz = body.tz ?? DEFAULT_TZ;
+    ensureOfficialHistoryInitialized();
+    const provider = getProviderForCountry(countryCode);
 
-    const items: EvalItem[] = [];
+    interface EvalItem {
+      year: number;
+      khgtDate: string | null;
+      witness: string | null;
+      localDate: string | null;
+      officialDate: string | null;
+      officialCountryCode: string | null;
+      officialAuthority: string | null;
+      officialInstitution: string | null;
+      officialStatus: OfficialStatus;
+      officialSourceUrl: string | null;
+      khgtVsLocalDays: number | null;
+      khgtVsOfficialDays: number | null;
+      localVsOfficialDays: number | null;
+      /** 'live' unless NASA HORIZONS was unreachable and the pipeline fell back to
+       *  estimated data — surfaced so the UI never presents a mock date as authoritative. */
+      khgtDataSource: string | null;
+      localDataSource: string | null;
+    }
 
-    for (let y = fromYear; y <= toYear; y++) {
-      // Compute prediction if not pre-supplied
-      if (!predictions.has(y)) {
-        try {
-          const multi = await predictRamadanMulti(y, lat, lon, tz);
-          if (multi.primary) {
-            predictions.set(y, multi.primary.ramadan1LocalDate);
-          }
-        } catch (err) {
-          console.warn(`Could not predict year ${y}:`, (err as Error).message);
-        }
+    // Each year is independent, and within a year the KHGT (global) and Local pipelines
+    // are independent of each other — run everything concurrently instead of one
+    // year/pipeline at a time. horizonsClient's own semaphore (MAX_CONCURRENCY=4)
+    // still throttles actual NASA traffic, so this only improves utilization of
+    // previously-idle wait time, not the request rate against NASA.
+    async function computeYear(y: number) {
+      const [khgtResult, localResult] = await Promise.allSettled([
+        predictKHGTFullForGregorianYear(y),
+        predictRamadanMulti(y, lat, lon, tz),
+      ]);
+
+      // KHGT: may return 0, 1, or 2 results per Gregorian year
+      let khgtRows: Array<{ khgtDate: string; witness: string | null; dataSource: string }> = [];
+      if (khgtResult.status === 'fulfilled') {
+        khgtRows = khgtResult.value.map(f => ({
+          khgtDate: f.ramadan.khgtStartCivilDate,
+          witness: f.ramadan.witness?.name ?? null,
+          dataSource: f.ramadan.dataSource,
+        }));
+      } else {
+        console.warn(`KHGT failed for ${y}:`, khgtResult.reason?.message);
       }
 
-      const pred = predictions.get(y) ?? null;
-      const gtEntry = gt.find(e => e.year === y);
-
-      if (!gtEntry) {
-        // No ground truth for this year
-        items.push({
-          year: y,
-          predicted: pred,
-          actual: null,
-          status: 'NO_GROUND_TRUTH',
-          note: pred
-            ? `Predicted ${pred} (no ground truth available for comparison)`
-            : 'No prediction and no ground truth available',
-        });
-      } else if (!pred) {
-        items.push({
-          year: y,
-          predicted: null,
-          actual: gtEntry.ramadan1,
-          status: 'SKIPPED',
-          note: 'No prediction available for this year',
-        });
-      } else if (pred === gtEntry.ramadan1) {
-        items.push({
-          year: y,
-          predicted: pred,
-          actual: gtEntry.ramadan1,
-          status: 'OK',
-        });
+      // Local: may return 0, 1, or 2 results per Gregorian year
+      let localRows: Array<{ date: string; dataSource: string }> = [];
+      if (localResult.status === 'fulfilled') {
+        localRows = localResult.value.results
+          .filter(r => r.ramadan1LocalDate.startsWith(`${y}-`))
+          .map(r => ({ date: r.ramadan1LocalDate, dataSource: r.dataSource }));
+        localRows.sort((a, b) => a.date.localeCompare(b.date));
       } else {
+        console.warn(`Local failed for ${y}:`, localResult.reason?.message);
+      }
+
+      // C: official government history — a storage read, never live/blocking.
+      // A missing/unsupported/unverified entry must never take down A or B above.
+      let official: ReturnType<typeof getRecord> = null;
+      if (provider) {
+        official = getRecord(provider.countryCode, y);
+        // Kick a background refresh if applicable — never awaited, never blocks
+        // this response (see updater.ts for the throttling/observation-window rules).
+        maybeRefreshInBackground(provider.countryCode, y);
+      }
+
+      return { year: y, khgtRows, localRows, official, providerSupported: !!provider };
+    }
+
+    const years: number[] = [];
+    for (let y = fromYear; y <= toYear; y++) years.push(y);
+    const perYear = await Promise.all(years.map(computeYear));
+
+    const items: EvalItem[] = [];
+    for (const { year: y, khgtRows, localRows, official, providerSupported } of perYear) {
+      // Pair KHGT and local rows
+      const n = Math.max(khgtRows.length, localRows.length, 1);
+
+      const { officialDate, officialStatus } = resolveOfficialFields(official, providerSupported);
+
+      for (let i = 0; i < n; i++) {
+        const khgtDate = khgtRows[i]?.khgtDate ?? null;
+        const witness = khgtRows[i]?.witness ?? null;
+        const localDate = localRows[i]?.date ?? null;
+
         items.push({
           year: y,
-          predicted: pred,
-          actual: gtEntry.ramadan1,
-          status: 'FAIL',
-          note: `Predicted ${pred} vs actual ${gtEntry.ramadan1}`,
+          khgtDate,
+          witness,
+          localDate,
+          officialDate,
+          officialCountryCode: provider?.countryCode ?? null,
+          officialAuthority: officialDate ? official?.authority ?? null : null,
+          officialInstitution: officialDate ? official?.institution ?? null : null,
+          officialStatus,
+          officialSourceUrl: official?.sourceUrl ?? null,
+          khgtVsLocalDays: diffCivilDays(khgtDate, localDate),
+          khgtVsOfficialDays: diffCivilDays(khgtDate, officialDate),
+          localVsOfficialDays: diffCivilDays(localDate, officialDate),
+          khgtDataSource: khgtRows[i]?.dataSource ?? null,
+          localDataSource: localRows[i]?.dataSource ?? null,
         });
       }
     }
 
-    const totalOk = items.filter(i => i.status === 'OK').length;
-    const totalFail = items.filter(i => i.status === 'FAIL').length;
-    const totalSkipped = items.filter(i => i.status === 'SKIPPED').length;
-    const totalNoGt = items.filter(i => i.status === 'NO_GROUND_TRUTH').length;
-    const evaluated = totalOk + totalFail;
-    const accuracy = evaluated > 0 ? `${((totalOk / evaluated) * 100).toFixed(1)}%` : 'N/A';
-
     return NextResponse.json({
       items,
-      totalOk,
-      totalFail,
-      totalSkipped,
-      totalNoGroundTruth: totalNoGt,
-      accuracy,
       fromYear,
       toYear,
+      local: { lat, lon, tz },
+      official: provider
+        ? { countryCode: provider.countryCode, countryName: provider.countryName, authority: provider.authority, institution: provider.institution, supported: true }
+        : { countryCode: countryCode ?? null, countryName: null, authority: null, institution: null, supported: false },
     });
   } catch (err) {
-    console.error('Evaluate error:', err);
+    console.error('Evaluate GET error:', err);
     return NextResponse.json(
       { error: (err as Error).message },
       { status: 500 }

@@ -1,0 +1,10 @@
+hips_order            = 3
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = guereins_hd
+hips_service_url      = /vendor/stellarium/data/landscapes/guereins_hd
+hips_release_date     = 2026-03-03T00:00Z
+source_md5            = derived_from_guereins_order2
+type                  = landscape

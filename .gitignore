@@ -30,3 +30,8 @@ next-env.d.ts
 
 # cache
 .cache/
+
+# runtime persistence (official-history store — written at runtime, never
+# committed; see src/lib/officialHistory/store.ts)
+.data/
+.rawdata

@@ -1,4 +1,4 @@
-# Islamic Astronomical Studies
+# International Astronomical Studies
 
 > Komputasi hisab menentukan awal Ramadan berdasarkan data ephemeris NASA/JPL HORIZONS menggunakan Algoritma Newton–Raphson
 

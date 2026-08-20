@@ -44,12 +44,44 @@ export interface PredictionResult {
     date: string;
     result: WujudulHilalResult;
   }>;
+  // Idul Fitri / 1 Syawal fields
+  syawalConjunctionUTC: string | null;
+  syawalConjunctionLocal: string | null;
+  syawalSunsetLocal: string | null;
+  syawalMoonAltitudeAtSunsetDeg: number | null;
+  syawalRuleA: boolean | null;
+  syawalRuleB: boolean | null;
+  syawalFulfilled: boolean | null;
+  syawalStartLocalDateTime: string | null;
+  syawal1LocalDate: string | null;
+  lastFastingLocalDate: string | null;
+  ramadanLengthDays: number | null;
 }
 
 function loadAnchors(): AnchorEntry[] {
-  const filePath = path.join(process.cwd(), 'data', 'anchors_syaban.json');
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw) as AnchorEntry[];
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'anchors_syaban.json');
+    if (!fs.existsSync(filePath)) return [];
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(raw) as AnchorEntry[];
+  } catch {
+    return [];
+  }
+}
+
+// ─── Inline estimator (no anchor file required) ─────────────────
+const SEED_YEAR = 2025;
+const SEED_RAMADAN1_MS = Date.UTC(2025, 2, 1); // 2025-03-01
+const ISLAMIC_YEAR_DAYS = 354.36667;
+
+/** Estimate Ramadan 1 for a given year using arithmetic from a known seed. */
+function estimateRamadan1(year: number): Date {
+  const yearDiff = year - SEED_YEAR;
+  const daysFromSeed = yearDiff * ISLAMIC_YEAR_DAYS;
+  const est = new Date(SEED_RAMADAN1_MS + daysFromSeed * 86400000);
+  while (est.getUTCFullYear() < year - 1) est.setUTCDate(est.getUTCDate() + Math.round(ISLAMIC_YEAR_DAYS));
+  while (est.getUTCFullYear() > year) est.setUTCDate(est.getUTCDate() - Math.round(ISLAMIC_YEAR_DAYS));
+  return est;
 }
 
 /**
@@ -64,13 +96,40 @@ async function predictFromAnchor(
 ): Promise<PredictionResult | null> {
   const anchors = loadAnchors();
   const anchor = anchors.find((a) => a.gregorianYear === anchorYear);
-  if (!anchor) return null;
 
-  const syaban1 = DateTime.fromISO(anchor.syaban1LocalDate, { zone: tz });
-  const windowStart = syaban1.plus({ days: 15 }).toUTC().toJSDate();
-  const windowEnd = syaban1.plus({ days: 55 }).toUTC().toJSDate();
+  let windowStart: Date;
+  let windowEnd: Date;
+  if (anchor) {
+    const syaban1 = DateTime.fromISO(anchor.syaban1LocalDate, { zone: tz });
+    windowStart = syaban1.plus({ days: 15 }).toUTC().toJSDate();
+    windowEnd = syaban1.plus({ days: 55 }).toUTC().toJSDate();
+  } else {
+    // Fallback: estimate conjunction window from arithmetic (no anchor needed)
+    const estRamadan = estimateRamadan1(anchorYear);
+    windowStart = new Date(estRamadan.getTime() - 20 * 86400000);
+    windowEnd = new Date(estRamadan.getTime() + 20 * 86400000);
+  }
 
-  const conjResult = await findConjunction(windowStart, windowEnd);
+  // Try with expanding windows on failure
+  let conjResult: ConjunctionResult;
+  try {
+    conjResult = await findConjunction(windowStart, windowEnd);
+  } catch {
+    const w1s = new Date(windowStart.getTime() - 20 * 86400000);
+    const w1e = new Date(windowEnd.getTime() + 20 * 86400000);
+    try {
+      conjResult = await findConjunction(w1s, w1e);
+    } catch {
+      const w2s = new Date(windowStart.getTime() - 60 * 86400000);
+      const w2e = new Date(windowEnd.getTime() + 60 * 86400000);
+      conjResult = await findConjunction(w2s, w2e);
+    }
+  }
+
+  // Reject unconverged results — they likely landed on opposition, not conjunction
+  if (!conjResult.converged) {
+    return null;
+  }
   const conjLocal = DateTime.fromJSDate(conjResult.conjunctionUTC, { zone: tz });
   const conjDateStr = conjLocal.toISODate()!;
 
@@ -102,10 +161,25 @@ async function predictFromAnchor(
     candidatesChecked.push({ date: candidateDate, result: whResult });
 
     if (whResult.fulfilled) {
+      // ── Syaban consistency: verify previous conjunction exists before this one ──
+      try {
+        const approxPrev = new Date(conjResult.conjunctionUTC.getTime() - 29.53 * 86400000);
+        const prevWinS = new Date(approxPrev.getTime() - 5 * 86400000);
+        const prevWinE = new Date(approxPrev.getTime() + 5 * 86400000);
+        const prevConj = await findConjunction(prevWinS, prevWinE);
+        if (prevConj.conjunctionUTC.getTime() >= conjResult.conjunctionUTC.getTime()) {
+          // Previous conjunction is not actually before — skip to next offset
+          continue;
+        }
+      } catch {
+        // Can't find previous conjunction — proceed (HORIZONS/mock limitation)
+      }
+
       const sunsetPlusOne = DateTime.fromJSDate(sunset.sunsetUTC, { zone: tz }).plus({ seconds: 1 });
+      const ramadan1 = DateTime.fromISO(candidateDate, { zone: tz }).plus({ days: 1 }).toISODate()!;
 
       return {
-        ramadan1LocalDate: candidateDate,
+        ramadan1LocalDate: ramadan1,
         ramadanStartLocalDateTime: sunsetPlusOne.toISO()!,
         conjunctionUTC: conjResult.conjunctionISO,
         conjunctionLocal: conjLocal.toISO()!,
@@ -128,11 +202,91 @@ async function predictFromAnchor(
         timezone: tz,
         dataSource: moonTopo.results[0]?.source ?? 'mock',
         candidatesChecked,
+        // Syawal fields — filled later by attachSyawal
+        syawalConjunctionUTC: null,
+        syawalConjunctionLocal: null,
+        syawalSunsetLocal: null,
+        syawalMoonAltitudeAtSunsetDeg: null,
+        syawalRuleA: null,
+        syawalRuleB: null,
+        syawalFulfilled: null,
+        syawalStartLocalDateTime: null,
+        syawal1LocalDate: null,
+        lastFastingLocalDate: null,
+        ramadanLengthDays: null,
       };
     }
   }
 
-  return null; // WH criteria not met for this anchor
+  return null; // WH criteria not met for any candidate
+}
+
+/**
+ * Compute Idul Fitri / 1 Syawal for a given Ramadan result.
+ * Uses the same Rule A+B pipeline: find next conjunction after Ramadan,
+ * then evaluate WH at sunset candidates.
+ */
+async function attachSyawal(
+  result: PredictionResult,
+  lat: number,
+  lon: number,
+  tz: string
+): Promise<void> {
+  const ramadanConjUTC = new Date(result.conjunctionUTC);
+
+  // Search window: 24–35 days after Ramadan conjunction (next lunation)
+  const winStart = new Date(ramadanConjUTC.getTime() + 24 * 86400000);
+  const winEnd = new Date(ramadanConjUTC.getTime() + 35 * 86400000);
+
+  let syawalConj: ConjunctionResult;
+  try {
+    syawalConj = await findConjunction(winStart, winEnd);
+  } catch {
+    return; // Cannot find Syawal conjunction — leave fields null
+  }
+  if (!syawalConj.converged) return;
+
+  const conjLocal = DateTime.fromJSDate(syawalConj.conjunctionUTC, { zone: tz });
+  const conjDateStr = conjLocal.toISODate()!;
+
+  for (let offset = -1; offset <= 2; offset++) {
+    const candDt = DateTime.fromISO(conjDateStr, { zone: tz }).plus({ days: offset });
+    const candDate = candDt.toISODate()!;
+
+    const sunset = getSunset(candDate, lat, lon, tz);
+    const [moonTopo] = await Promise.all([
+      getTopoAzEl("'301'", [sunset.sunsetUTC], lat, lon),
+    ]);
+    const moonAlt = moonTopo.results[0]?.el ?? 0;
+
+    const whResult = checkWujudulHilal({
+      conjunctionUTC: syawalConj.conjunctionUTC,
+      sunsetUTC: sunset.sunsetUTC,
+      moonAltAtSunsetDeg: moonAlt,
+      candidateDate: candDate,
+    });
+
+    if (whResult.fulfilled) {
+      const sunsetDt = DateTime.fromJSDate(sunset.sunsetUTC, { zone: tz });
+      const syawal1 = DateTime.fromISO(candDate, { zone: tz }).plus({ days: 1 }).toISODate()!;
+
+      result.syawalConjunctionUTC = syawalConj.conjunctionISO;
+      result.syawalConjunctionLocal = conjLocal.toISO()!;
+      result.syawalSunsetLocal = sunsetDt.toISO()!;
+      result.syawalMoonAltitudeAtSunsetDeg = parseFloat(moonAlt.toFixed(6));
+      result.syawalRuleA = whResult.ruleA;
+      result.syawalRuleB = whResult.ruleB;
+      result.syawalFulfilled = whResult.fulfilled;
+      result.syawalStartLocalDateTime = sunsetDt.plus({ seconds: 1 }).toISO()!;
+      result.syawal1LocalDate = syawal1;
+      result.lastFastingLocalDate = candDate;
+      // ramadanLengthDays = civil days from 1 Ramadan to 1 Syawal
+      const r1 = DateTime.fromISO(result.ramadan1LocalDate, { zone: tz });
+      const s1 = DateTime.fromISO(syawal1, { zone: tz });
+      result.ramadanLengthDays = Math.round(s1.diff(r1, 'days').days);
+      return;
+    }
+  }
 }
 
 export interface MultiPredictionResult {
@@ -181,6 +335,8 @@ export async function predictRamadanMulti(
           // Only include if the Ramadan start date falls in the requested Gregorian year
           // Avoid duplicates (same ramadan1LocalDate)
           if (!collected.some(r => r.ramadan1LocalDate === result.ramadan1LocalDate)) {
+            // Attach Idul Fitri / 1 Syawal computation
+            await attachSyawal(result, lat, lon, tz);
             collected.push(result);
           }
         }
@@ -193,18 +349,10 @@ export async function predictRamadanMulti(
   // Sort by date ascending
   collected.sort((a, b) => a.ramadan1LocalDate.localeCompare(b.ramadan1LocalDate));
 
-  // Check if no anchors exist at all for any of the tried years
-  const anchors = loadAnchors();
-  const hasAnyAnchor = anchorYearsToTry.some(ay => anchors.some(a => a.gregorianYear === ay));
-  if (!hasAnyAnchor) {
+  if (collected.length === 0) {
     warnings.push(
-      `No Sya'ban anchor found for years ${anchorYearsToTry.join(', ')}. ` +
-      `Run scripts/generate-anchors-horizons.ts or add entries to data/anchors_syaban.json.`
-    );
-  } else if (collected.length === 0) {
-    warnings.push(
-      `Anchors exist but no Ramadan start found in Gregorian year ${year}. ` +
-      `This may indicate limited ephemeris data coverage (mock mode) or WH criteria not met.`
+      `No Ramadan start found in Gregorian year ${year}. ` +
+      `This may indicate limited ephemeris data coverage (mock mode) or WH criteria not met for any candidate.`
     );
   }
 

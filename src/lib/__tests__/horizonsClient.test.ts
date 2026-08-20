@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dateToJD, jdToDate, parseSOE } from '@/lib/horizonsClient';
+import { dateToJD, jdToDate, parseSOE, queryHorizons } from '@/lib/horizonsClient';
 
 describe('horizonsClient', () => {
   describe('dateToJD', () => {
@@ -55,6 +55,32 @@ footer`;
 
     it('should throw on missing markers', () => {
       expect(() => parseSOE('no markers here')).toThrow('$$SOE');
+    });
+  });
+
+  describe('mock fallback outside fixture range', () => {
+    it('keeps lunar longitude moving for years outside the 2029 fixture', async () => {
+      const previousMode = process.env.HORIZONS_MODE;
+      process.env.HORIZONS_MODE = 'mock';
+      try {
+        const response = await queryHorizons({
+          COMMAND: "'301'",
+          MAKE_EPHEM: "'YES'",
+          EPHEM_TYPE: "'OBSERVER'",
+          CENTER: "'500@399'",
+          QUANTITIES: "'31'",
+          TLIST: "'2461088.5, 2461089.5'",
+          TEST_NONCE: "'outside-fixture-regression'",
+        });
+        const rows = parseSOE(response.result);
+
+        expect(response.source).toBe('mock');
+        expect(rows).toHaveLength(2);
+        expect(rows[1].values[0]).not.toBeCloseTo(rows[0].values[0], 6);
+      } finally {
+        if (previousMode === undefined) delete process.env.HORIZONS_MODE;
+        else process.env.HORIZONS_MODE = previousMode;
+      }
     });
   });
 });

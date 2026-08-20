@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python nb_part3.py)",
+      "Bash(python nb_part4.py)",
+      "Bash(python nb_part5.py)",
+      "Bash(python nb_build.py)",
+      "Bash(python -m pip install -q requests pytz timezonefinder python-dateutil pandas)",
+      "Bash(python nb_selftest.py)",
+      "Bash(rm -f nb_cells.json)",
+      "Bash(python -m pip install -q nbformat)",
+      "Bash(python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(grep -n '\\\\\\\\\\\\\\\\n' \"C:\\\\Users\\\\REIALT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Skripsi-Wujudul-Hilal-Islamic-Astronomical-Studies\\\\d7c4b5b6-fe22-4124-b1a6-ccd59f6a1cdc\\\\scratchpad\\\\nb_part5.py\")",
+      "Bash(grep -n '\\\\\\\\\\\\\\\\' nb_part1.py nb_part2.py nb_part3.py nb_part4.py nb_part5.py)",
+      "Bash(rm -rf \"C:\\\\Users\\\\REIALT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Skripsi-Wujudul-Hilal-Islamic-Astronomical-Studies\\\\d7c4b5b6-fe22-4124-b1a6-ccd59f6a1cdc\\\\scratchpad\\\\horizons_cache\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(python -m pip install -q openpyxl)",
+      "Bash(rm -f evaluasi_wujudul_hilal.xlsx)",
+      "Bash(rm -rf horizons_cache)",
+      "Bash(mkdir -p \"C:/Users/REIALT~1/AppData/Local/Temp/claude/d--Skripsi-Wujudul-Hilal-Islamic-Astronomical-Studies/d7c4b5b6-fe22-4124-b1a6-ccd59f6a1cdc/scratchpad\")",
+      "Bash(python nb_part6.py)",
+      "Bash(python -m pip install -q requests pytz timezonefinder python-dateutil pandas openpyxl)",
+      "Bash(curl -s \"http://localhost:3000/api/predict?year=2026\")",
+      "Bash(node \"C:\\\\Users\\\\REIALT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Skripsi-Wujudul-Hilal-Islamic-Astronomical-Studies\\\\65f57598-fc46-4163-af86-996285abffc2\\\\scratchpad\\\\test_topo.mjs\")",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

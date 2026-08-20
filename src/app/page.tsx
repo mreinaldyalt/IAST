@@ -1,408 +1,166 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
-import { useRouter } from 'next/navigation';
+import styles from './dashboard.module.css';
 
-interface PredictionData {
-  ramadan1LocalDate: string;
-  ramadanStartLocalDateTime: string;
-  conjunctionUTC: string;
-  conjunctionLocal: string;
-  sunsetLocal: string;
-  sunsetUTC: string;
-  moonAltitudeAtSunsetDeg: number;
-  moonAzimuthAtSunsetDeg: number;
-  sunAltitudeAtSunsetDeg: number;
-  sunAzimuthAtSunsetDeg: number;
-  ruleA: boolean;
-  ruleB: boolean;
-  isBorderline: boolean;
-  nrIterations: Array<{
-    iteration: number;
-    epochUTC: string;
-    fDeg: number;
-    fPrimeDegPerSec: number;
-    stepSec: number;
-  }>;
-  converged: boolean;
-  totalIterations: number;
-  bisectionDeltaSec: number | null;
-  bisectionWarning: boolean;
-  requestParams: Record<string, string>;
-  topoParams: Record<string, string>;
-  timezone: string;
-  dataSource: string;
-  candidatesChecked: Array<{
-    date: string;
-    result: {
-      ruleA: boolean;
-      ruleB: boolean;
-      fulfilled: boolean;
-      candidateDate: string;
-      moonAltAtSunsetDeg: number;
-      isBorderline: boolean;
-    };
-  }>;
-}
+const MODULES = [
+  { id: 'calendar', href: '/astronomy-event', icon: '◫' },
+  { id: 'parade', href: '/parade-planet', icon: '⟡' },
+  { id: 'eclipse', href: '/gerhana', icon: '◒' },
+  { id: 'prediction', href: '/prediksi-ramadan', icon: '☾' },
+  { id: 'conjunction', href: '/evaluasi-konjungsi', icon: '◎' },
+  { id: 'history', href: '/evaluasi', icon: '⌁' },
+  { id: 'stellarium', href: '/stellarium', icon: '✦' },
+  { id: 'solar', href: '/solar-system', icon: '◉' },
+  { id: 'about', href: '/about', icon: 'ⓘ' },
+] as const;
 
-export default function HomePage() {
-  const { t } = useI18n();
-  const router = useRouter();
+const COPY = {
+  id: {
+    lab: 'PLATFORM RISET ASTRONOMI ISLAM', status: 'SISTEM SIAP', logo: 'TEMPAT LOGO', logoHint: 'SIAP DIGANTI',
+    eyebrow: 'KOMPUTASI · EPHEMERIS · VISUALISASI', acronym: 'IAST', systemLabel: 'SISTEM RISET', projectCode: 'SD / 01',
+    intro: 'Satu ruang komputasi untuk menjelajahi peristiwa astronomi, hisab awal Ramadan, evaluasi konjungsi, dan visualisasi langit berbasis data ilmiah.',
+    explore: 'JELAJAHI MODUL', prediction: 'BUKA PREDIKSI RAMADAN', modules: 'MODUL TERINTEGRASI', data: 'DATA NASA/JPL', languages: 'DUA BAHASA',
+    creatorLabel: 'IDENTITAS PROYEK', builtBy: 'Sistem ini dibuat dan dikembangkan oleh', project: 'sebagai proyek untuk memenuhi tugas Skripsi S1 Data Sains berjudul',
+    thesis: '“KOMPUTASI HISAB PREDIKSI AWAL RAMADAN BERBASIS DATA EPHEMERIS NASA JPL HORIZONS MENGGUNAKAN ALGORITMA NEWTON-RAPHSON”',
+    sectionNo: '01', section: 'PILIH DESTINASI', sectionHint: 'Arahkan kursor atau sentuh modul untuk melihat ringkasan.',
+    active: 'MODUL AKTIF', open: 'BUKA MODUL', footer: 'INTERNATIONAL ASTRONOMICAL STUDIES · PROYEK SKRIPSI DATA SAINS',
+    moduleText: {
+      calendar: ['Kalender Astronomi', 'Kalender terpadu untuk menelusuri peristiwa astronomi hasil komputasi sistem.'],
+      parade: ['Parade Planet', 'Analisis kesejajaran dan visibilitas planet berdasarkan ephemeris NASA/JPL Horizons.'],
+      eclipse: ['Gerhana', 'Laboratorium perhitungan Gerhana Matahari dan Bulan beserta kontak serta visibilitas lokal.'],
+      prediction: ['Prediksi Ramadan', 'Komputasi awal Ramadan memakai data ephemeris dan algoritma Newton–Raphson.'],
+      conjunction: ['Evaluasi Konjungsi', 'Audit konjungsi dalam suatu periode beserta detail numerik dan sumber datanya.'],
+      history: ['Evaluasi Riwayat', 'Perbandingan hasil prediksi terhadap riwayat global, lokal, dan sumber resmi.'],
+      stellarium: ['Tampilan Stellarium', 'Eksplorasi interaktif posisi benda langit dari sudut pandang pengamat.'],
+      solar: ['Tata Surya', 'Visualisasi spasial planet, orbit, skala, dan perjalanan waktu simulasi.'],
+      about: ['Tentang Sistem', 'Metode, referensi, lisensi, serta informasi pengembangan sistem.'],
+    },
+  },
+  en: {
+    lab: 'INTERNATIONAL ASTRONOMY RESEARCH PLATFORM', status: 'SYSTEM READY', logo: 'LOGO PLACEHOLDER', logoHint: 'READY TO REPLACE',
+    eyebrow: 'COMPUTATION · EPHEMERIS · VISUALIZATION', acronym: 'IAST', systemLabel: 'RESEARCH SYSTEM', projectCode: 'DS / 01',
+    intro: 'A unified computational space for exploring astronomical events, the start of Ramadan, conjunction evaluation, and scientific sky visualization.',
+    explore: 'EXPLORE MODULES', prediction: 'OPEN RAMADAN PREDICTION', modules: 'INTEGRATED MODULES', data: 'NASA/JPL DATA', languages: 'TWO LANGUAGES',
+    creatorLabel: 'PROJECT IDENTITY', builtBy: 'This system was created and developed by', project: 'as a project submitted in fulfillment of the Bachelor of Data Science thesis entitled',
+    thesis: '“COMPUTATIONAL HISAB FOR PREDICTING THE START OF RAMADAN BASED ON NASA JPL HORIZONS EPHEMERIS DATA USING THE NEWTON–RAPHSON ALGORITHM”',
+    sectionNo: '01', section: 'SELECT A DESTINATION', sectionHint: 'Hover, focus, or touch a module to preview its purpose.',
+    active: 'ACTIVE MODULE', open: 'OPEN MODULE', footer: 'INTERNATIONAL ASTRONOMICAL STUDIES · DATA SCIENCE THESIS PROJECT',
+    moduleText: {
+      calendar: ['Astronomy Calendar', 'An integrated calendar for exploring astronomical events computed by the system.'],
+      parade: ['Planet Parade', 'Planet alignment and visibility analysis based on NASA/JPL Horizons ephemerides.'],
+      eclipse: ['Eclipse', 'A solar and lunar eclipse laboratory with contact phases and local visibility.'],
+      prediction: ['Ramadan Prediction', 'Computes the start of Ramadan using ephemeris data and the Newton–Raphson algorithm.'],
+      conjunction: ['Conjunction Evaluation', 'Audits conjunctions over a period with numerical details and data provenance.'],
+      history: ['History Evaluation', 'Compares predictions with global, local, and official historical records.'],
+      stellarium: ['Stellarium View', 'Interactively explores celestial positions from an observer’s point of view.'],
+      solar: ['Solar System', 'Spatial visualization of planets, orbits, scales, and simulated time travel.'],
+      about: ['About the System', 'Methods, references, licenses, and system development information.'],
+    },
+  },
+} as const;
 
-  const [year, setYear] = useState(2029);
-  const [cityQuery, setCityQuery] = useState('');
-  const [lat, setLat] = useState(-6.2383);
-  const [lon, setLon] = useState(106.9756);
-  const [tz, setTz] = useState('Asia/Jakarta');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [result, setResult] = useState<PredictionData | null>(null);
-  const [multiResults, setMultiResults] = useState<PredictionData[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
-  const [cityResults, setCityResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
-
-  async function searchCity() {
-    if (!cityQuery.trim()) return;
-    try {
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityQuery)}&limit=5`,
-        { headers: { 'User-Agent': 'IslamicAstronomicalStudies/1.0' } }
-      );
-      const data = await resp.json();
-      setCityResults(data);
-    } catch {
-      setCityResults([]);
-    }
-  }
-
-  function selectCity(c: { display_name: string; lat: string; lon: string }) {
-    setLat(parseFloat(c.lat));
-    setLon(parseFloat(c.lon));
-    setCityQuery(c.display_name.split(',')[0]);
-    setCityResults([]);
-    // Auto detect timezone
-    fetch(`/api/sky?lat=${c.lat}&lon=${c.lon}&tz=UTC&datetimeLocal=${new Date().toISOString()}`)
-      .catch(() => {});
-  }
-
-  async function computePrediction() {
-    setLoading(true);
-    setError('');
-    setResult(null);
-    setMultiResults([]);
-    setWarnings([]);
-    try {
-      const resp = await fetch(
-        `/api/predict?year=${year}&lat=${lat}&lon=${lon}&tz=${encodeURIComponent(tz)}`
-      );
-      const data = await resp.json();
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setResult(data);
-        if (Array.isArray(data.results)) setMultiResults(data.results);
-        if (Array.isArray(data.warnings)) setWarnings(data.warnings);
-      }
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function openStellarium() {
-    if (!result) return;
-    const params = new URLSearchParams({
-      lat: lat.toString(),
-      lon: lon.toString(),
-      tz,
-      datetime: result.ramadanStartLocalDateTime,
-      mode: 'sunset',
-    });
-    router.push(`/stellarium?${params.toString()}`);
-  }
+export default function DashboardPage() {
+  const { locale, toggleLocale } = useI18n();
+  const c = COPY[locale];
+  const [activeId, setActiveId] = useState<(typeof MODULES)[number]['id']>('prediction');
+  const active = MODULES.find((module) => module.id === activeId) ?? MODULES[3];
+  const activeText = c.moduleText[active.id];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">{t.menu1}</h1>
+    <div className={styles.page}>
+      <div className={styles.backdrop} aria-hidden="true" />
+      <div className={styles.gridOverlay} aria-hidden="true" />
 
-      {/* Form */}
-      <div className="glass-card p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Year */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t.targetYear}</label>
-            <input
-              type="number"
-              value={year}
-              onChange={(e) => setYear(parseInt(e.target.value, 10))}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500 [color-scheme:dark]"
-              min={2000}
-              max={2100}
-            />
-          </div>
-
-          {/* City search */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t.citySearch}</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={cityQuery}
-                onChange={(e) => setCityQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && searchCity()}
-                placeholder="Bekasi, Jakarta..."
-                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white placeholder:text-white/30 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-              <button
-                onClick={searchCity}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm transition"
-              >
-                Search
-              </button>
-            </div>
-            {cityResults.length > 0 && (
-              <div className="mt-1 bg-[#1c2333] border border-white/10 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                {cityResults.map((c, i) => (
-                  <button
-                    key={i}
-                    onClick={() => selectCity(c)}
-                    className="block w-full text-left px-3 py-2 hover:bg-white/10 text-sm text-slate-300 border-b border-white/5 last:border-b-0"
-                  >
-                    {c.display_name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Lat */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t.latitude}</label>
-            <input
-              type="number"
-              step="0.0001"
-              value={lat}
-              onChange={(e) => setLat(parseFloat(e.target.value))}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500 [color-scheme:dark]"
-            />
-          </div>
-
-          {/* Lon */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t.longitude}</label>
-            <input
-              type="number"
-              step="0.0001"
-              value={lon}
-              onChange={(e) => setLon(parseFloat(e.target.value))}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500 [color-scheme:dark]"
-            />
-          </div>
-
-          {/* Timezone */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t.timezone}</label>
-            <input
-              type="text"
-              value={tz}
-              onChange={(e) => setTz(e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={computePrediction}
-          disabled={loading}
-          className="mt-6 w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 transition-all text-lg shadow-lg shadow-indigo-500/20"
-        >
-          {loading ? t.computing : t.computeBtn}
-        </button>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-900/30 border border-red-500/30 rounded-xl p-4 mb-6">
-          <h3 className="font-bold text-red-400">{t.errorTitle}</h3>
-          <p className="text-red-300 text-sm mt-1">{error}</p>
-        </div>
-      )}
-
-      {/* Results */}
-      {result && (
-        <>
-          {/* Warnings */}
-          {warnings.length > 0 && (
-            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 mb-4">
-              <h3 className="font-bold text-yellow-300 text-sm mb-1">Warnings</h3>
-              {warnings.map((w, i) => (
-                <p key={i} className="text-yellow-200/80 text-xs">{w}</p>
-              ))}
-            </div>
-          )}
-
-          {/* Multiple Ramadans notice */}
-          {multiResults.length > 1 && (
-            <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4 mb-4">
-              <h3 className="font-bold text-indigo-300 text-sm mb-1">
-                {multiResults.length} Ramadan found in Gregorian year {year}
-              </h3>
-              <ul className="text-indigo-200/80 text-xs space-y-1 mt-1">
-                {multiResults.map((r, i) => (
-                  <li key={i}>Ramadan {i + 1}: starts {r.ramadan1LocalDate}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Main results card */}
-          <div className="glass-card p-6 mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent mb-4">{t.resultsTitle}</h2>
-
-            <div className="bg-indigo-900/30 rounded-lg p-4 mb-4">
-              <div className="text-sm text-slate-400">{t.dataSource}</div>
-              <div className="font-semibold text-indigo-300">
-                {result.dataSource === 'live' ? t.liveMode : t.mockMode}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <ResultRow label={t.ramadan1Date} value={result.ramadan1LocalDate} highlight />
-              <ResultRow label={t.ramadanStart} value={result.ramadanStartLocalDateTime} highlight />
-              <ResultRow label={t.conjunctionUTC} value={result.conjunctionUTC} />
-              <ResultRow label={t.conjunctionLocal} value={result.conjunctionLocal} />
-              <ResultRow label={t.sunsetLocal} value={result.sunsetLocal} />
-              <ResultRow label={t.moonAltAtSunset} value={`${result.moonAltitudeAtSunsetDeg.toFixed(6)}°`} />
-              <ResultRow label={t.moonAzAtSunset} value={`${result.moonAzimuthAtSunsetDeg.toFixed(6)}°`} />
-              <ResultRow label={t.sunAltAtSunset} value={`${result.sunAltitudeAtSunsetDeg.toFixed(6)}°`} />
-              <ResultRow label={t.sunAzAtSunset} value={`${result.sunAzimuthAtSunsetDeg.toFixed(6)}°`} />
-            </div>
-
-            {/* Rule flags */}
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className={`p-3 rounded-lg ${result.ruleA ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
-                <span className="font-medium text-slate-300">{t.ruleA}:</span>{' '}
-                <span className={result.ruleA ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-                  {result.ruleA ? t.fulfilled : t.notFulfilled}
-                </span>
-              </div>
-              <div className={`p-3 rounded-lg ${result.ruleB ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
-                <span className="font-medium text-slate-300">{t.ruleB}:</span>{' '}
-                <span className={result.ruleB ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-                  {result.ruleB ? t.fulfilled : t.notFulfilled}
-                </span>
-              </div>
-            </div>
-
-            {result.isBorderline && (
-              <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-500/30 rounded-lg text-yellow-300 font-medium">
-                {t.borderlineWarning}
-              </div>
-            )}
-          </div>
-
-          {/* NASA Panel */}
-          <div className="glass-card p-6 mb-6">
-            <h2 className="text-xl font-bold text-blue-300 mb-4">{t.nasaPanelTitle}</h2>
-            <div className="mb-4">
-              <h3 className="font-semibold text-slate-300 mb-2">{t.requestParams}</h3>
-              <div className="bg-black/30 rounded-lg p-3 font-mono text-xs overflow-x-auto text-slate-400">
-                {Object.entries(result.requestParams).map(([k, v]) => (
-                  <div key={k}><span className="text-blue-400">{k}</span>: {v}</div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-300 mb-2">{t.rawValues}</h3>
-              <div className="bg-black/30 rounded-lg p-3 font-mono text-xs text-slate-400">
-                <div>Moon Alt: {result.moonAltitudeAtSunsetDeg.toFixed(8)}°</div>
-                <div>Moon Az: {result.moonAzimuthAtSunsetDeg.toFixed(8)}°</div>
-                <div>Sun Alt: {result.sunAltitudeAtSunsetDeg.toFixed(8)}°</div>
-                <div>Sun Az: {result.sunAzimuthAtSunsetDeg.toFixed(8)}°</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Explanation */}
-          <div className="glass-card p-6 mb-6">
-            <h2 className="text-xl font-bold text-slate-200 mb-3">{t.explanationTitle}</h2>
-            <p className="text-slate-400 leading-relaxed">{t.explanation}</p>
-          </div>
-
-          {/* Newton-Raphson Audit */}
-          <div className="glass-card p-6 mb-6">
-            <h2 className="text-xl font-bold text-purple-300 mb-4">{t.nrAuditTitle}</h2>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              <div className="bg-purple-900/30 rounded-lg p-3">
-                <div className="text-xs text-slate-400">{t.converged}</div>
-                <div className="font-bold text-lg">{result.converged ? 'Yes' : 'No'}</div>
-              </div>
-              <div className="bg-purple-900/30 rounded-lg p-3">
-                <div className="text-xs text-slate-400">{t.totalIterations}</div>
-                <div className="font-bold text-lg text-white">{result.totalIterations}</div>
-              </div>
-              <div className="bg-purple-900/30 rounded-lg p-3">
-                <div className="text-xs text-slate-400">{t.bisectionDelta}</div>
-                <div className="font-bold text-lg text-white">
-                  {result.bisectionDeltaSec !== null ? result.bisectionDeltaSec.toFixed(3) : 'N/A'}
-                </div>
-              </div>
-              {result.bisectionWarning && (
-                <div className="bg-yellow-900/30 rounded-lg p-3 border border-yellow-500/30">
-                  <div className="text-xs text-yellow-300 font-medium">{t.bisectionWarning}</div>
-                </div>
-              )}
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-purple-900/30">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-slate-300">{t.iteration}</th>
-                    <th className="px-3 py-2 text-left text-slate-300">{t.epoch}</th>
-                    <th className="px-3 py-2 text-right text-slate-300">{t.fValue}</th>
-                    <th className="px-3 py-2 text-right text-slate-300">{t.derivative}</th>
-                    <th className="px-3 py-2 text-right text-slate-300">{t.stepSec}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.nrIterations.map((iter) => (
-                    <tr key={iter.iteration} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="px-3 py-2 text-slate-300">{iter.iteration}</td>
-                      <td className="px-3 py-2 font-mono text-xs text-slate-400">{iter.epochUTC}</td>
-                      <td className="px-3 py-2 text-right font-mono text-slate-400">{iter.fDeg.toExponential(6)}</td>
-                      <td className="px-3 py-2 text-right font-mono text-slate-400">{iter.fPrimeDegPerSec.toExponential(4)}</td>
-                      <td className="px-3 py-2 text-right font-mono text-slate-400">{iter.stepSec.toFixed(3)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Open Stellarium button */}
-          <button
-            onClick={openStellarium}
-            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all text-lg shadow-lg shadow-indigo-500/20"
-          >
-            {t.openStellarium}
+      <header className={styles.topbar}>
+        <div className={styles.miniBrand}><b>IAST</b><span>{c.lab}</span></div>
+        <div className={styles.topActions}>
+          <span className={styles.status}><i />{c.status}</span>
+          <button type="button" onClick={toggleLocale} aria-label={locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}>
+            {locale === 'id' ? 'EN' : 'ID'}
           </button>
-        </>
-      )}
-    </div>
-  );
-}
+        </div>
+      </header>
 
-function ResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={`p-3 rounded-lg ${highlight ? 'bg-indigo-900/30 border border-indigo-500/30' : 'bg-white/5'}`}>
-      <div className="text-xs text-slate-400">{label}</div>
-      <div className={`font-semibold ${highlight ? 'text-indigo-200 text-lg' : 'text-slate-200'} font-mono`}>
-        {value}
-      </div>
+      <main className={styles.content}>
+        <section className={styles.hero}>
+          <div className={styles.heroMain}>
+            <p className={styles.eyebrow}>{c.eyebrow}</p>
+            <div className={styles.titleRow}>
+              <div className={styles.logoSlot} aria-label={c.logo}>
+                <span>{c.logo}</span><small>{c.logoHint}</small>
+              </div>
+              <div>
+                <h1>International Astronomical<br />Studies <em>[IAST]</em></h1>
+                <span className={styles.acronym}>{c.acronym} / {c.systemLabel}</span>
+              </div>
+            </div>
+            <p className={styles.intro}>{c.intro}</p>
+            <div className={styles.ctaRow}>
+              <a className={styles.primaryCta} href="#modules">{c.explore}<b>↓</b></a>
+              <Link className={styles.secondaryCta} href="/prediksi-ramadan">{c.prediction}<b>↗</b></Link>
+            </div>
+            <div className={styles.stats}>
+              <div><strong>09</strong><span>{c.modules}</span></div>
+              <div><strong>JPL</strong><span>{c.data}</span></div>
+              <div><strong>ID/EN</strong><span>{c.languages}</span></div>
+            </div>
+          </div>
+
+          <aside className={styles.identityCard}>
+            <div className={styles.cardHeader}><span>{c.creatorLabel}</span><b>{c.projectCode}</b></div>
+            <div className={styles.authorMark}>MR</div>
+            <p>{c.builtBy}</p>
+            <h2>Muhammad Reinaldy<br />Santoso Alaratte</h2>
+            <p>{c.project}</p>
+            <blockquote>{c.thesis}</blockquote>
+          </aside>
+        </section>
+
+        <section className={styles.modulesSection} id="modules">
+          <div className={styles.sectionHeader}>
+            <div><span>{c.sectionNo}</span><h2>{c.section}</h2></div>
+            <p>{c.sectionHint}</p>
+          </div>
+
+          <div className={styles.moduleLayout}>
+            <div className={styles.moduleGrid}>
+              {MODULES.map((module, index) => {
+                const text = c.moduleText[module.id];
+                const selected = activeId === module.id;
+                return (
+                  <Link
+                    key={module.id}
+                    href={module.href}
+                    className={`${styles.moduleCard} ${selected ? styles.selected : ''}`}
+                    onMouseEnter={() => setActiveId(module.id)}
+                    onFocus={() => setActiveId(module.id)}
+                    onTouchStart={() => setActiveId(module.id)}
+                  >
+                    <span className={styles.moduleIndex}>{String(index + 1).padStart(2, '0')}</span>
+                    <b className={styles.moduleIcon}>{module.icon}</b>
+                    <h3>{text[0]}</h3>
+                    <p>{text[1]}</p>
+                    <i>↗</i>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <aside className={styles.activePanel}>
+              <div className={styles.activeOrbit}><span>{active.icon}</span></div>
+              <small>{c.active} / {activeText[0].toUpperCase()}</small>
+              <h3>{activeText[0]}</h3>
+              <p>{activeText[1]}</p>
+              <Link href={active.href}>{c.open}<b>↗</b></Link>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <footer className={styles.footer}><span>{c.footer}</span><b>KKCDEV</b></footer>
     </div>
   );
 }

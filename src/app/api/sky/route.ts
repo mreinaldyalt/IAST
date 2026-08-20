@@ -1,6 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTopoAzEl } from '@/lib/horizonsQueries';
+import { getTopoAzEl, getEclipticLon } from '@/lib/horizonsQueries';
 import { DateTime } from 'luxon';
+
+const DEFAULT_MOON_ASSET = '/assets/2d/satellite/moon.png';
+const PINK_MOON_ASSET = '/assets/2d/satellite/pinkmoon.png';
+
+type MoonBaseEvent =
+  | 'new_moon'
+  | 'waxing_crescent'
+  | 'first_quarter'
+  | 'waxing_gibbous'
+  | 'full_moon'
+  | 'waning_gibbous'
+  | 'last_quarter'
+  | 'waning_crescent';
+
+function wrap360(v: number): number {
+  return ((v % 360) + 360) % 360;
+}
+
+function clampEl(v: number): number {
+  return Math.max(-90, Math.min(90, v));
+}
+
+function classifyBaseEventByDLon(dLonDeg: number): MoonBaseEvent {
+  const events: MoonBaseEvent[] = [
+    'new_moon',
+    'waxing_crescent',
+    'first_quarter',
+    'waxing_gibbous',
+    'full_moon',
+    'waning_gibbous',
+    'last_quarter',
+    'waning_crescent',
+  ];
+  const idx = Math.floor(wrap360(dLonDeg + 22.5) / 45) % 8;
+  return events[idx];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,14 +46,13 @@ export async function GET(request: NextRequest) {
     const tz = searchParams.get('tz') || '';
     const datetimeLocal = searchParams.get('datetimeLocal') || '';
 
-    if (isNaN(lat) || isNaN(lon) || !tz || !datetimeLocal) {
+    if (Number.isNaN(lat) || Number.isNaN(lon) || !tz || !datetimeLocal) {
       return NextResponse.json(
         { error: 'Missing params: lat, lon, tz, datetimeLocal required' },
         { status: 400 }
       );
     }
 
-    // Parse local datetime to UTC
     const dt = DateTime.fromISO(datetimeLocal, { zone: tz });
     if (!dt.isValid) {
       return NextResponse.json(
@@ -28,22 +63,48 @@ export async function GET(request: NextRequest) {
 
     const utcDate = dt.toUTC().toJSDate();
 
-    // Query HORIZONS for Sun and Moon topocentric AZ/EL
-    const [sunRes, moonRes] = await Promise.all([
+    const [sunRes, moonRes, moonEclonRes, sunEclonRes] = await Promise.all([
       getTopoAzEl("'10'", [utcDate], lat, lon),
       getTopoAzEl("'301'", [utcDate], lat, lon),
+      getEclipticLon("'301'", [utcDate]),
+      getEclipticLon("'10'", [utcDate]),
     ]);
 
     const sun = sunRes.results[0] || { az: 0, el: 0, source: 'mock' };
     const moon = moonRes.results[0] || { az: 0, el: 0, source: 'mock' };
+    const moonEcLon = moonEclonRes.results[0]?.ecLon;
+    const sunEcLon = sunEclonRes.results[0]?.ecLon;
 
-    // Normalize: az → [0, 360), el → [-90, 90]
-    const normAz = (v: number) => ((v % 360) + 360) % 360;
-    const clampEl = (v: number) => Math.max(-90, Math.min(90, v));
+    let dLonDeg = 0;
+    let baseEvent: MoonBaseEvent = 'new_moon';
+
+    if (typeof moonEcLon === 'number' && typeof sunEcLon === 'number') {
+      dLonDeg = wrap360(moonEcLon - sunEcLon);
+      baseEvent = classifyBaseEventByDLon(dLonDeg);
+    }
+
+    const monthLocal = dt.month;
+    const isFullMoon = baseEvent === 'full_moon';
+    const isPinkMoon = isFullMoon && monthLocal === 4;
+    const visualAssetPath = isPinkMoon ? PINK_MOON_ASSET : DEFAULT_MOON_ASSET;
 
     return NextResponse.json({
-      sun: { az: normAz(sun.az), el: clampEl(sun.el), source: sun.source },
-      moon: { az: normAz(moon.az), el: clampEl(moon.el), source: moon.source },
+      sun: { az: wrap360(sun.az), el: clampEl(sun.el), source: sun.source },
+      moon: { az: wrap360(moon.az), el: clampEl(moon.el), source: moon.source },
+      moonVisualAssetPath: visualAssetPath,
+      visualAssetPath,
+      moonEvent: baseEvent,
+      baseEvent,
+      isFullMoon,
+      isPinkMoon,
+      moonEventDetail: {
+        baseEvent,
+        isFullMoon,
+        monthLocal,
+        isPinkMoon,
+        dLonDeg,
+        visualAssetPath,
+      },
       datetimeUTC: utcDate.toISOString(),
       datetimeLocal,
       lat,

@@ -1,5 +1,5 @@
 {
-  "name": "islamic-astronomical-studies",
+  "name": "international-astronomical-studies",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -14,21 +14,30 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.1.0",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "leaflet": "^1.9.4",
     "luxon": "^3.7.2",
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "satellite.js": "6.0.2",
     "suncalc": "^1.9.0",
+    "three": "^0.185.1",
     "tz-lookup": "^6.1.25"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
+    "@types/leaflet": "^1.9.21",
     "@types/luxon": "^3.7.1",
     "@types/node": "^25.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/suncalc": "^1.9.2",
+    "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^5.1.4",
+    "esbuild": "^0.27.3",
     "eslint": "^10.0.2",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.5.6",
@@ -37,5 +46,13 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
-  }
+  },
+  "description": "> Komputasi hisab menentukan awal Ramadan berdasarkan data ephemeris NASA/JPL HORIZONS menggunakan Algoritma Newton–Raphson",
+  "main": "next.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

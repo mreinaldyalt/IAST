@@ -4,7 +4,7 @@ import { I18nProvider } from '@/components/I18nProvider';
 import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Islamic Astronomical Studies',
+  title: 'International Astronomical Studies [IAST]',
   description:
     'Komputasi hisab menentukan awal Ramadan berdasarkan data ephemeris NASA/JPL HORIZONS menggunakan Algoritma Newton–Raphson',
 };

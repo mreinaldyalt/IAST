@@ -54,8 +54,8 @@ export default function AboutPage() {
               <p className="font-semibold text-slate-200">Skripsi S1 Muhammad Reinaldy Santoso Alaratte</p>
               <p className="font-semibold text-slate-200">KKC DEV</p>
               <p className="mt-2">
-                &quot;Komputasi hisab menentukan awal Ramadan berdasarkan data ephemeris NASA/JPL HORIZONS
-                menggunakan Algoritma Newton–Raphson&quot;
+                &quot;Komputasi hisab prediksi Awal Ramadan Berbasis data Ephemeris NASA JPL Horizons
+                Menggunakan Algoritma Newton–Raphson&quot;
               </p>
             </div>
           </Section>

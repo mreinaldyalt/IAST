@@ -9,7 +9,8 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/', label: t.menu1 },
+    { href: '/', label: t.dashboardMenu },
+    { href: '/prediksi-ramadan', label: t.menu1 },
     { href: '/stellarium', label: t.menu2 },
     { href: '/evaluasi', label: t.evaluation },
     { href: '/about', label: t.about },

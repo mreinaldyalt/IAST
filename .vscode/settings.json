@@ -1,0 +1,18 @@
+{
+  "//": "Pengecualian agar VS Code tidak meng-index/menonton folder cache besar (penyebab lag). Cache tetap ada & berfungsi, hanya tidak di-scan editor.",
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/.cache/**": true,
+    "**/node_modules/**": true,
+    "**/.git/**": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/.cache": true,
+    "**/node_modules": true,
+    "**/public/vendor/stellarium/data": true
+  },
+  "files.exclude": {
+    "**/.cache": true
+  }
+}
