@@ -325,6 +325,8 @@ const dictionaries = {
     ssAU: 'AU',
     ssLoading: 'Loading 3D scene…',
     ssScrub: 'Time scrubber',
+    ssHideControls: 'Hide controls',
+    ssShowControls: 'Show controls',
     // Planet Parade
     paradeMenu: 'Planet Parade',
   },
@@ -649,6 +651,8 @@ const dictionaries = {
     ssAU: 'AU',
     ssLoading: 'Memuat scene 3D…',
     ssScrub: 'Geser Waktu',
+    ssHideControls: 'Sembunyikan kontrol',
+    ssShowControls: 'Tampilkan kontrol',
     // Planet Parade
     paradeMenu: 'Parade Planet',
   },

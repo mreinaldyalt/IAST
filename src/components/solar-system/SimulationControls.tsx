@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ScaleMode } from '@/lib/solar-system/types';
 import { SPEED_OPTIONS } from '@/hooks/useSimulationClock';
 import type { Dictionary, Locale } from '@/lib/i18n';
@@ -50,7 +50,7 @@ function Btn({ active, onClick, children, title, wide }: { active?: boolean; onC
     <button
       onClick={onClick}
       title={title}
-      className={`h-7 ${wide ? 'min-w-[52px] px-2' : 'min-w-[44px] px-2'} rounded-lg text-xs font-medium border transition flex items-center justify-center gap-1 ${
+      className={`shrink-0 h-6 sm:h-7 ${wide ? 'min-w-[40px] sm:min-w-[52px] px-1.5 sm:px-2' : 'min-w-[32px] sm:min-w-[44px] px-1.5 sm:px-2'} rounded-lg text-[10px] sm:text-xs font-medium border transition flex items-center justify-center gap-1 ${
         active
           ? 'bg-indigo-500/30 border-indigo-400/50 text-indigo-100'
           : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.1] hover:text-white'
@@ -89,7 +89,7 @@ function HoldButton({ delta, onStep, title, children }: {
       onPointerLeave={stop}
       onPointerCancel={stop}
       title={title}
-      className="h-7 min-w-[44px] px-2 rounded-lg text-xs font-medium border bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.1] hover:text-white transition select-none touch-none flex items-center justify-center"
+      className="shrink-0 h-6 sm:h-7 min-w-[32px] sm:min-w-[44px] px-1.5 sm:px-2 rounded-lg text-[10px] sm:text-xs font-medium border bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/[0.1] hover:text-white transition select-none touch-none flex items-center justify-center"
     >{children}</button>
   );
 }
@@ -126,95 +126,113 @@ export default function SimulationControls({
   const scrubRel = Math.max(-1, Math.min(1, (displayMs - centerRef.current) / halfSpanMs));
   const spanLabel = fmtSpan(spanDaysForSpeed(speed), locale);
 
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 w-[min(96vw,880px)]">
-      <div className="glass-card px-4 py-3 flex flex-col gap-2.5">
-        {/* Row: timestamp + transport */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs">
-              <span className={`w-2 h-2 rounded-full ${live ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} style={live ? { boxShadow: '0 0 8px rgba(52,211,153,.8)' } : undefined} />
-              <span className={live ? 'text-emerald-300 font-semibold' : 'text-slate-500'}>{live ? t.ssLive : '—'}</span>
-            </span>
-            <div className="text-xs text-slate-300 leading-tight">
-              <div><b className="text-white tabular-nums">{fmt(displayMs, 'Asia/Jakarta')}</b> <span className="text-slate-500">{t.ssWIB}</span></div>
-              <div className="text-slate-400 tabular-nums">{fmt(displayMs, 'UTC')} {t.ssUTC}</div>
+    <div className="absolute inset-x-0 bottom-2 sm:bottom-3 z-20 flex flex-col items-center gap-1.5 pointer-events-none">
+      {/* Tombol sembunyikan/tampilkan — selalu terlihat, di desktop maupun mobile,
+          agar layar visualisasi bisa dilapangkan saat panel kontrol tak dibutuhkan. */}
+      <button
+        onClick={() => setCollapsed((c) => !c)}
+        className="pointer-events-auto flex items-center gap-1 px-3 py-1 rounded-full glass-card text-[10px] sm:text-[11px] font-medium text-slate-300 hover:text-white transition"
+        title={collapsed ? t.ssShowControls : t.ssHideControls}
+      >
+        <svg className={`w-3 h-3 transition-transform ${collapsed ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+        </svg>
+        {collapsed ? t.ssShowControls : t.ssHideControls}
+      </button>
+
+      {!collapsed && (
+        <div className="pointer-events-auto w-[min(96vw,880px)] glass-card px-2.5 py-2 sm:px-4 sm:py-3 flex flex-col gap-2 sm:gap-2.5">
+          {/* Row: timestamp + transport */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="flex items-center gap-1.5 text-[11px] sm:text-xs shrink-0">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${live ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} style={live ? { boxShadow: '0 0 8px rgba(52,211,153,.8)' } : undefined} />
+                <span className={live ? 'text-emerald-300 font-semibold' : 'text-slate-500'}>{live ? t.ssLive : '—'}</span>
+              </span>
+              <div className="text-[11px] sm:text-xs text-slate-300 leading-tight">
+                <div><b className="text-white tabular-nums">{fmt(displayMs, 'Asia/Jakarta')}</b> <span className="text-slate-500">{t.ssWIB}</span></div>
+                <div className="text-slate-400 tabular-nums">{fmt(displayMs, 'UTC')} {t.ssUTC}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar justify-center sm:justify-end">
+              <HoldButton delta={-DAY} onStep={onStep} title="-1 day (tahan untuk cepat)">−1d</HoldButton>
+              <HoldButton delta={-HOUR} onStep={onStep} title="-1 hour (tahan untuk cepat)">−1h</HoldButton>
+              <button
+                onClick={onTogglePlay}
+                className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-white flex items-center justify-center hover:bg-indigo-500/50 transition"
+                title={playing ? 'Pause' : 'Play'}
+              >
+                {playing ? (
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 translate-x-[1px]" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z" /></svg>
+                )}
+              </button>
+              <HoldButton delta={HOUR} onStep={onStep} title="+1 hour (tahan untuk cepat)">+1h</HoldButton>
+              <HoldButton delta={DAY} onStep={onStep} title="+1 day (tahan untuk cepat)">+1d</HoldButton>
+              <span className="w-px h-5 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
+              <Btn onClick={onNow}>{t.ssNow}</Btn>
+              <Btn active={live} onClick={onLive}>{t.ssLive}</Btn>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <HoldButton delta={-DAY} onStep={onStep} title="-1 day (tahan untuk cepat)">−1d</HoldButton>
-            <HoldButton delta={-HOUR} onStep={onStep} title="-1 hour (tahan untuk cepat)">−1h</HoldButton>
-            <button
-              onClick={onTogglePlay}
-              className="w-8 h-8 shrink-0 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-white flex items-center justify-center hover:bg-indigo-500/50 transition"
-              title={playing ? 'Pause' : 'Play'}
-            >
-              {playing ? (
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-              ) : (
-                <svg className="w-4 h-4 translate-x-[1px]" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z" /></svg>
-              )}
-            </button>
-            <HoldButton delta={HOUR} onStep={onStep} title="+1 hour (tahan untuk cepat)">+1h</HoldButton>
-            <HoldButton delta={DAY} onStep={onStep} title="+1 day (tahan untuk cepat)">+1d</HoldButton>
-            <span className="w-px h-5 bg-white/10 mx-1" />
-            <Btn onClick={onNow}>{t.ssNow}</Btn>
-            <Btn active={live} onClick={onLive}>{t.ssLive}</Btn>
+
+          {/* Row: speed — scroll horizontal di mobile agar tak menumpuk ke bawah */}
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar sm:flex-wrap">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider mr-0.5 sm:mr-1 shrink-0">{t.ssSpeed}</span>
+            {SPEED_OPTIONS.map((s) => (
+              <Btn key={s} active={!live && speed === s} onClick={() => onSpeed(s)}>
+                {fmtSpeed(s)}
+              </Btn>
+            ))}
+          </div>
+
+          {/* Row: scrubber waktu — rentang mengikuti kecepatan, geser tak-hingga */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden sm:inline text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t.ssScrub}</span>
+            <input
+              type="range"
+              min={-1}
+              max={1}
+              step={0.0005}
+              value={scrubRel}
+              onPointerDown={() => { draggingRef.current = true; }}
+              onPointerUp={() => { draggingRef.current = false; }}
+              onPointerCancel={() => { draggingRef.current = false; }}
+              onChange={(e) => onSetTime(centerRef.current + Number(e.target.value) * halfSpanMs)}
+              className="flex-1 accent-indigo-400 cursor-pointer"
+              title={`${t.ssScrub} · ${spanLabel} — ${locale === 'id' ? 'lepas untuk lanjut geser' : 'release to keep sliding'}`}
+            />
+            <span className="text-[10px] sm:text-[11px] text-slate-300 tabular-nums w-12 sm:w-16 text-right shrink-0" title={locale === 'id' ? 'rentang geser' : 'slide range'}>{spanLabel}</span>
+          </div>
+
+          {/* Row: datetime + mode + reset */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 pt-1 border-t border-white/[0.06]">
+            <input
+              type="datetime-local"
+              value={toLocalInput(displayMs)}
+              onChange={(e) => { const v = e.target.value; if (v) onSetTime(new Date(v).getTime()); }}
+              className="w-full sm:w-auto bg-white/[0.05] border border-white/10 rounded-lg px-2 py-1 text-[11px] sm:text-xs text-slate-200 [color-scheme:dark]"
+              title={t.ssManualTime}
+            />
+            <div className="flex items-center justify-between sm:justify-end sm:flex-1 gap-2">
+              <div className="flex items-center gap-1">
+                <span className="hidden sm:inline text-[11px] font-semibold text-slate-500 uppercase tracking-wider mr-1">{t.ssMode}</span>
+                <Btn active={mode === 'overview'} onClick={() => onMode('overview')}>{t.ssOverview}</Btn>
+                <Btn active={mode === 'scientific'} onClick={() => onMode('scientific')}>{t.ssScientific}</Btn>
+              </div>
+              <Btn onClick={onReset} title={t.ssResetCamera} wide>
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114-3M20 15a8 8 0 01-14 3" /></svg>
+                  <span className="hidden sm:inline">{t.ssResetCamera}</span>
+                </span>
+              </Btn>
+            </div>
           </div>
         </div>
-
-        {/* Row: speed */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mr-1">{t.ssSpeed}</span>
-          {SPEED_OPTIONS.map((s) => (
-            <Btn key={s} active={!live && speed === s} onClick={() => onSpeed(s)}>
-              {fmtSpeed(s)}
-            </Btn>
-          ))}
-        </div>
-
-        {/* Row: scrubber waktu — rentang mengikuti kecepatan, geser tak-hingga */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t.ssScrub}</span>
-          <input
-            type="range"
-            min={-1}
-            max={1}
-            step={0.0005}
-            value={scrubRel}
-            onPointerDown={() => { draggingRef.current = true; }}
-            onPointerUp={() => { draggingRef.current = false; }}
-            onPointerCancel={() => { draggingRef.current = false; }}
-            onChange={(e) => onSetTime(centerRef.current + Number(e.target.value) * halfSpanMs)}
-            className="flex-1 accent-indigo-400 cursor-pointer"
-            title={`${t.ssScrub} · ${spanLabel} — ${locale === 'id' ? 'lepas untuk lanjut geser' : 'release to keep sliding'}`}
-          />
-          <span className="text-[11px] text-slate-300 tabular-nums w-16 text-right" title={locale === 'id' ? 'rentang geser' : 'slide range'}>{spanLabel}</span>
-        </div>
-
-        {/* Row: datetime + mode + reset */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/[0.06]">
-          <input
-            type="datetime-local"
-            value={toLocalInput(displayMs)}
-            onChange={(e) => { const v = e.target.value; if (v) onSetTime(new Date(v).getTime()); }}
-            className="bg-white/[0.05] border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200 [color-scheme:dark]"
-            title={t.ssManualTime}
-          />
-          <span className="flex-1" />
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mr-1">{t.ssMode}</span>
-            <Btn active={mode === 'overview'} onClick={() => onMode('overview')}>{t.ssOverview}</Btn>
-            <Btn active={mode === 'scientific'} onClick={() => onMode('scientific')}>{t.ssScientific}</Btn>
-          </div>
-          <Btn onClick={onReset} title={t.ssResetCamera} wide>
-            <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114-3M20 15a8 8 0 01-14 3" /></svg>
-              {t.ssResetCamera}
-            </span>
-          </Btn>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
