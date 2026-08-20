@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            cd /var/www/iast
+            cd /var/www/catalog-a-iast
             git fetch origin main
             git reset --hard origin/main
             pnpm install --frozen-lockfile
