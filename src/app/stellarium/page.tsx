@@ -145,19 +145,6 @@ function StellariumPage() {
   const [showDsoOverlay, setShowDsoOverlay] = useState(true);
   const [showSatOverlay, setShowSatOverlay] = useState(false);
   const [overlayPicked, setOverlayPicked] = useState<{ kind: string; title: string; extra?: Record<string, string> } | null>(null);
-  const [moonHookStatus, setMoonHookStatus] = useState('INIT');
-  const [moonHookDetail, setMoonHookDetail] = useState('waiting');
-  const [moonObjExists, setMoonObjExists] = useState(false);
-  const [moonHasVisible, setMoonHasVisible] = useState(false);
-  const [moonHasCall, setMoonHasCall] = useState(false);
-  const [moonRuntimeCandidates, setMoonRuntimeCandidates] = useState('pending');
-  const [moonInspectSummary, setMoonInspectSummary] = useState('pending');
-  const [moonProofStatus, setMoonProofStatus] = useState('idle');
-  const [selectionExists, setSelectionExists] = useState(false);
-  const [selectionId, setSelectionId] = useState('-');
-  const [selectionName, setSelectionName] = useState('-');
-  const [selectionHasVisible, setSelectionHasVisible] = useState(false);
-  const [selectionHasCall, setSelectionHasCall] = useState(false);
   const [clickedObj, setClickedObj] = useState<{
     name: string; id: string; designations: string[];
     alt?: number; az?: number;
@@ -223,220 +210,28 @@ function StellariumPage() {
     };
   }, [clickedObj?.modelPath]);
 
+  /**
+   * Memasang tekstur bulan kustom ke engine Stellarium (hook `setMoonVisualConfig`
+   * yang ditambahkan pada build engine di public/vendor/stellarium). Bila hook-nya
+   * tidak tersedia, fungsi keluar diam-diam dan engine menggambar bulan bawaannya.
+   */
   const applyMoonVisualConfig = useCallback((assetPath?: string) => {
     const selectedAssetPath = assetPath || DEFAULT_MOON_ASSET;
     try {
       const stel = stelRef.current as any;
-      if (!stel) {
-        setMoonHookStatus('NO_STEL');
-        setMoonHookDetail(`path=${selectedAssetPath}`);
-        return;
-      }
-
-      const hasSetMoonVisualConfig = typeof stel.setMoonVisualConfig === 'function';
-      const hasSetMoonNativeVisible = typeof stel.setMoonNativeVisible === 'function';
-
-      if (!hasSetMoonVisualConfig) {
-        const candidateKeys = Object.keys(stel)
-          .filter((key) => /moon|visual|asset|texture/i.test(key))
-          .slice(0, 12);
-        const candidateText = candidateKeys.length > 0 ? candidateKeys.join(',') : 'none';
-        setMoonHookStatus('HOOK_MISSING');
-        setMoonHookDetail(`candidates=${candidateText}`);
-        return;
-      }
+      if (!stel) return;
+      if (typeof stel.setMoonVisualConfig !== 'function') return;
 
       stel.setMoonVisualConfig({ enabled: true, assetPath: selectedAssetPath });
-      if (hasSetMoonNativeVisible) {
+      if (typeof stel.setMoonNativeVisible === 'function') {
         stel.setMoonNativeVisible(false);
-        setMoonHookStatus('HOOK_APPLIED_NATIVE_HIDDEN');
-        setMoonHookDetail(`path=${selectedAssetPath};nativeCallable=YES`);
-      } else {
-        setMoonHookStatus('HOOK_APPLIED');
-        setMoonHookDetail(`path=${selectedAssetPath};nativeCallable=NO`);
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonHookStatus('HOOK_ERROR');
-      setMoonHookDetail(msg || 'unknown error');
+    } catch {
+      // Engine belum siap — biarkan bulan bawaan engine yang tampil.
     }
   }, []);
 
   const resolvedMoonAssetPath = pickMoonAssetPath(skyData);
-
-  const updateMoonRuntimeSummary = useCallback((Module: any, core: any, moonObj: any) => {
-    try {
-      const moon = moonObj || null;
-      const moonKeys = moon ? Object.keys(moon) : [];
-      const moonProtoKeys = moon ? Object.getOwnPropertyNames(Object.getPrototypeOf(moon) || {}) : [];
-      const combined = Array.from(new Set([...moonKeys, ...moonProtoKeys]));
-      const pattern = /visible|hidden|show|opacity|alpha|scale|color|label|render|point|sprite|halo/i;
-      const candidates = combined.filter((k) => pattern.test(k)).slice(0, 40);
-      const coreKeys = core ? Object.keys(core).filter((k) => pattern.test(k)).slice(0, 20) : [];
-
-      setMoonObjExists(!!moon);
-      setMoonHasVisible(!!moon && 'visible' in moon);
-      setMoonHasCall(!!moon && typeof moon._call === 'function');
-      setMoonRuntimeCandidates(candidates.length ? candidates.join(', ') : 'none');
-      setMoonInspectSummary(
-        `moonKeys=${moonKeys.length};moonProtoKeys=${moonProtoKeys.length};coreKeys=${coreKeys.length};coreCandidates=${coreKeys.join(',') || 'none'}`
-      );
-
-      const win = window as any;
-      win.__SWE = Module;
-      win.__SWE_CORE = core || null;
-      win.__SWE_MOON = moon;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonInspectSummary(`summary_error:${msg}`);
-    }
-  }, []);
-
-  const updateSelectionRuntimeSummary = useCallback((coreArg?: any) => {
-    try {
-      const win = window as any;
-      const core = coreArg || win.__SWE_CORE;
-      const sel = core?.selection || null;
-      setSelectionExists(!!sel);
-      setSelectionHasVisible(!!sel && 'visible' in sel);
-      setSelectionHasCall(!!sel && typeof sel._call === 'function');
-
-      if (!sel) {
-        setSelectionId('-');
-        setSelectionName('-');
-        return;
-      }
-
-      const sid = typeof sel.id === 'string' && sel.id ? sel.id : 'Unknown';
-      let sname = sid;
-      try {
-        const desigs = typeof sel.designations === 'function' ? sel.designations() : [];
-        if (Array.isArray(desigs) && desigs.length > 0 && typeof desigs[0] === 'string') {
-          sname = desigs[0];
-        }
-      } catch {
-        // ignore
-      }
-      setSelectionId(sid);
-      setSelectionName(sname);
-    } catch {
-      setSelectionExists(false);
-      setSelectionHasVisible(false);
-      setSelectionHasCall(false);
-      setSelectionId('-');
-      setSelectionName('-');
-    }
-  }, []);
-
-  const proofVisibleFalse = useCallback(() => {
-    try {
-      const win = window as any;
-      const moon = win.__SWE_MOON;
-      if (!moon) {
-        setMoonProofStatus('visible=false: moon object missing');
-        return;
-      }
-      const hasVisible = 'visible' in moon;
-      const before = hasVisible ? String((moon as any).visible) : 'no_visible_prop';
-      try { (moon as any).visible = false; } catch { }
-      const after = hasVisible ? String((moon as any).visible) : 'no_visible_prop';
-      setMoonProofStatus(`visible=false executed; hasVisible=${hasVisible ? 'YES' : 'NO'}; before=${before}; after=${after}`);
-      updateMoonRuntimeSummary(win.__SWE, win.__SWE_CORE, moon);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonProofStatus(`visible=false error: ${msg}`);
-    }
-  }, [updateMoonRuntimeSummary]);
-
-  const proofSelectionVisibleFalse = useCallback(() => {
-    try {
-      const win = window as any;
-      const core = win.__SWE_CORE;
-      const sel = core?.selection;
-      if (!sel) {
-        setMoonProofStatus('selection visible=false: selection missing');
-        updateSelectionRuntimeSummary(core);
-        return;
-      }
-      const hasVisible = 'visible' in sel;
-      const before = hasVisible ? String((sel as any).visible) : 'no_visible_prop';
-      try { (sel as any).visible = false; } catch { }
-      const after = hasVisible ? String((sel as any).visible) : 'no_visible_prop';
-      setMoonProofStatus(`selection visible=false executed; hasVisible=${hasVisible ? 'YES' : 'NO'}; before=${before}; after=${after}`);
-      updateSelectionRuntimeSummary(core);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonProofStatus(`selection visible=false error: ${msg}`);
-    }
-  }, [updateSelectionRuntimeSummary]);
-
-  const proofCallSetHidden = useCallback(() => {
-    try {
-      const win = window as any;
-      const moon = win.__SWE_MOON;
-      if (!moon) {
-        setMoonProofStatus('_call set hidden: moon object missing');
-        return;
-      }
-      if (typeof moon._call !== 'function') {
-        setMoonProofStatus('_call set hidden: _call missing');
-        updateMoonRuntimeSummary(win.__SWE, win.__SWE_CORE, moon);
-        return;
-      }
-      let ret: unknown = null;
-      ret = moon._call('set', { visible: false, hidden: true, show: false, opacity: 0, alpha: 0, scale: 0.0001, color: [1, 0, 1, 1] });
-      setMoonProofStatus(`_call set hidden executed; ret=${ret == null ? 'null' : String(ret).slice(0, 80)}`);
-      updateMoonRuntimeSummary(win.__SWE, win.__SWE_CORE, moon);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonProofStatus(`_call set hidden error: ${msg}`);
-    }
-  }, [updateMoonRuntimeSummary]);
-
-  const proofSelectionCallSetHidden = useCallback(() => {
-    try {
-      const win = window as any;
-      const core = win.__SWE_CORE;
-      const sel = core?.selection;
-      if (!sel) {
-        setMoonProofStatus('selection _call set hidden: selection missing');
-        updateSelectionRuntimeSummary(core);
-        return;
-      }
-      if (typeof sel._call !== 'function') {
-        setMoonProofStatus('selection _call set hidden: _call missing');
-        updateSelectionRuntimeSummary(core);
-        return;
-      }
-      const ret = sel._call('set', { visible: false, hidden: true, show: false, opacity: 0, alpha: 0, scale: 0.0001, color: [1, 0, 1, 1] });
-      setMoonProofStatus(`selection _call set hidden executed; ret=${ret == null ? 'null' : String(ret).slice(0, 80)}`);
-      updateSelectionRuntimeSummary(core);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonProofStatus(`selection _call set hidden error: ${msg}`);
-    }
-  }, [updateSelectionRuntimeSummary]);
-
-  const proofInspectKeys = useCallback(() => {
-    try {
-      const win = window as any;
-      const core = win.__SWE_CORE;
-      const sel = core?.selection || null;
-      const selectionAll = sel
-        ? Array.from(new Set([...Object.keys(sel), ...Object.getOwnPropertyNames(Object.getPrototypeOf(sel) || {})]))
-        : [];
-      const coreAll = core ? Object.keys(core) : [];
-      const pattern = /visible|hidden|show|opacity|alpha|scale|color|label|render|point|sprite|halo/i;
-      const selectionCand = selectionAll.filter((k) => pattern.test(k)).slice(0, 50);
-      const coreCand = coreAll.filter((k) => pattern.test(k)).slice(0, 30);
-      setMoonInspectSummary(`selection:${selectionCand.join(',') || 'none'} | core:${coreCand.join(',') || 'none'}`);
-      setMoonProofStatus(`inspect keys executed; selection=${sel ? 'YES' : 'NO'}; core=${core ? 'YES' : 'NO'}`);
-      updateSelectionRuntimeSummary(core);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setMoonProofStatus(`inspect keys error: ${msg}`);
-    }
-  }, [updateSelectionRuntimeSummary]);
 
   const fetchSky = useCallback(async (dt: string) => {
     if (abortRef.current) abortRef.current.abort();
@@ -589,8 +384,6 @@ function StellariumPage() {
             } catch {
               moonObj = null;
             }
-            updateMoonRuntimeSummary(Module, core, moonObj);
-            updateSelectionRuntimeSummary(core);
             const dataBase = '/vendor/stellarium/data/';
             try {
               core.landscapes?.addDataSource?.({ url: dataBase + 'landscapes/guereins_hd', key: 'guereins' });
@@ -627,7 +420,6 @@ function StellariumPage() {
                       const sel = core.selection;
                       if (!sel) {
                         setClickedObj(null);
-                        updateSelectionRuntimeSummary(core);
                         return;
                       }
                       const desigs: string[] = typeof sel.designations === 'function' ? sel.designations() : [];
@@ -686,7 +478,6 @@ function StellariumPage() {
                       const modelPath = resolveModelPath(name, objId, desigs);
                       setClickedObj({ name, id: objId, designations: desigs, alt, az, modelPath, vmag, distance, phase, radius, raDeg, decDeg, riseLocal, setLocal, visibilityNote });
                       setZoomLocked(false); // objek baru dipilih → label tombol fokus direset
-                      updateSelectionRuntimeSummary(core);
                     } catch (e) {
                       if (process.env.NODE_ENV === 'development') {
                         console.error('[SWE click handler]', e);

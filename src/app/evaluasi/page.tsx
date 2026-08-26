@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import HistoryAuditPanel from '@/components/audit/HistoryAuditPanel';
+import styles from '../ramadan.module.css';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -61,7 +62,7 @@ async function fetchCountry(lat: number, lon: number): Promise<{ country: string
 }
 
 export default function EvaluasiPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [fromYear, setFromYear] = useState(2024);
   const [toYear, setToYear] = useState(2028);
@@ -218,16 +219,26 @@ export default function EvaluasiPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <section>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-4">
-          {t.cmpTitle ?? 'Perbandingan Rule A dan Rule B vs Lokal'}
-        </h1>
-        <p className="text-slate-400 mb-4 text-sm">
-          {t.cmpDesc ?? 'Bandingkan prediksi Rule A dan Rule B dengan data History Lokal. Klik peta untuk mengatur lokasi pengamat lokal.'}
-        </p>
+    <div className={styles.page}>
+      <header className={styles.topbar}>
+        <div className={styles.brand}>IAST <span>/ RAMADAN RESEARCH</span></div>
+        <div className={styles.status}><i /> {locale === 'id' ? 'RIWAYAT GLOBAL + LOKAL' : 'GLOBAL + LOCAL HISTORY'}</div>
+      </header>
+      <div className={styles.content}>
+        <section className={styles.hero}>
+          <p className={styles.eyebrow}>{locale === 'id' ? 'Evaluasi Historis · 03' : 'Historical Evaluation · 03'}</p>
+          <h1>{t.evaluation ?? 'Evaluasi History Global dan Lokal'}<em>{locale === 'id' ? 'Komparasi Prediksi dan Penetapan' : 'Prediction and Decision Comparison'}</em></h1>
+          <p className={styles.heroCopy}>
+            {t.cmpDesc ?? 'Bandingkan prediksi global, hasil lokal, dan riwayat penetapan resmi berdasarkan lokasi pengamatan.'}
+          </p>
+          <div className={styles.heroMeta}>
+            <span>Global KHGT</span><span>{locale === 'id' ? 'Wujudul Hilal Lokal' : 'Local Wujudul Hilal'}</span><span>{locale === 'id' ? 'Riwayat Resmi' : 'Official History'}</span><span>{locale === 'id' ? 'Audit Bab IV' : 'Chapter IV Audit'}</span>
+          </div>
+        </section>
 
-        <div className="glass-card p-6 mb-6">
+        <section className={styles.workspace}>
+
+        <div className={`${styles.controlPanel} glass-card p-6 mb-6`}>
           {/* City search */}
           <div className="mb-4">
             <label className="text-xs text-slate-500 block mb-1">{t.citySearch ?? 'Search city (Nominatim OSM)'}</label>
@@ -420,7 +431,8 @@ export default function EvaluasiPage() {
             </table>
           </div>
         )}
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

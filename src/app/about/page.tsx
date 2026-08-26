@@ -1,75 +1,72 @@
 'use client';
 
 import { useI18n } from '@/components/I18nProvider';
+import styles from './page.module.css';
+
+const COPY = {
+  id: {
+    status: 'DOKUMENTASI SISTEM', eyebrow: 'IDENTITAS · METODE · TEKNOLOGI · 04', title: 'Tentang', subtitle: 'International Astronomical Studies',
+    lead: 'IAST adalah platform riset astronomi internasional untuk komputasi peristiwa langit, penelitian kalender Ramadan, dan visualisasi kondisi astronomis berbasis data ilmiah.',
+    identity: 'IDENTITAS PROYEK', project: 'Sistem riset astronomi dan proyek Skripsi S1 Data Sains',
+    modules: [
+      ['Peristiwa Astronomi', 'Kalender tahunan, parade planet, serta laboratorium Gerhana Matahari dan Bulan.'],
+      ['Riset Ramadan', 'Prediksi awal Ramadan, evaluasi periode konjungsi, serta komparasi riwayat global dan lokal.'],
+      ['Visualisasi Langit', 'Stellarium View dan Tata Surya untuk menelusuri kondisi langit pada waktu tertentu.'],
+    ],
+    methodHead: '01 / LANDASAN KOMPUTASI', techHead: '03 / TEKNOLOGI', licenseHead: '04 / LISENSI',
+    methods: ['Konjungsi Bulan–Matahari dihitung dengan algoritma Newton–Raphson dan validasi bisection.', 'Prediksi KHGT mengevaluasi geometri Bulan, elongasi, ketinggian, waktu maghrib, dan saksi global.', 'Gerhana dihitung dari state vector serta geometri umbra–penumbra untuk kontak dan visibilitas pengamat.', 'Parade planet menilai kesejajaran, jumlah peserta, dan matriks visibilitas berdasarkan waktu serta lokasi.'],
+    data: ['NASA/JPL Horizons sebagai sumber ephemeris utama Matahari, Bulan, dan planet.', 'Respons ephemeris divalidasi sebelum digunakan dan disimpan dalam cache agar permintaan berikutnya lebih ringan.', 'Fallback tidak disamarkan sebagai data langsung; status sumber tetap ditampilkan pada hasil.', 'Lokasi, zona waktu, dan visualisasi pengamat diproses secara topocentric bila dibutuhkan.'],
+    tech: ['Next.js App Router, React, TypeScript, dan Tailwind CSS.', 'Luxon, SunCalc, tz-lookup, Leaflet, dan OpenStreetMap.', 'Stellarium Web Engine untuk visualisasi langit interaktif.', 'Three.js dan React Three Fiber untuk visualisasi Tata Surya.', 'Vitest untuk pengujian fungsi komputasi.'],
+    license: 'Stellarium Web Engine digunakan berdasarkan lisensi AGPL. Data peta memakai OpenStreetMap. Hak dan atribusi masing-masing komponen tetap mengikuti lisensi sumbernya.',
+    creator: 'DIRANCANG DAN DIKEMBANGKAN OLEH', degree: 'Proyek untuk memenuhi tugas Skripsi S1 Data Sains',
+    thesis: '“KOMPUTASI HISAB PREDIKSI AWAL RAMADAN BERBASIS DATA EPHEMERIS NASA JPL HORIZONS MENGGUNAKAN ALGORITMA NEWTON-RAPHSON”',
+    footer: 'INTERNATIONAL ASTRONOMICAL STUDIES · DOKUMENTASI SISTEM',
+  },
+  en: {
+    status: 'SYSTEM DOCUMENTATION', eyebrow: 'IDENTITY · METHODS · TECHNOLOGY · 04', title: 'About', subtitle: 'International Astronomical Studies',
+    lead: 'IAST is an international astronomy research platform for celestial-event computation, Ramadan calendar research, and scientific data-driven astronomical visualization.',
+    identity: 'PROJECT IDENTITY', project: 'Astronomy research system and Bachelor of Data Science thesis project',
+    modules: [
+      ['Astronomical Events', 'Annual calendar, planet parades, and a complete solar and lunar eclipse laboratory.'],
+      ['Ramadan Research', 'Ramadan-start prediction, conjunction-period evaluation, and global/local historical comparison.'],
+      ['Sky Visualization', 'Stellarium View and Solar System tools for exploring the sky at a selected time.'],
+    ],
+    methodHead: '01 / COMPUTATIONAL FOUNDATION', techHead: '03 / TECHNOLOGY', licenseHead: '04 / LICENSES',
+    methods: ['Moon–Sun conjunctions are solved with Newton–Raphson and bisection validation.', 'KHGT prediction evaluates lunar geometry, elongation, altitude, sunset time, and global witnesses.', 'Eclipses use state vectors and umbra–penumbra geometry for contacts and observer visibility.', 'Planet parades evaluate alignment, participant count, and a visibility matrix for the selected time and location.'],
+    data: ['NASA/JPL Horizons is the primary ephemeris source for the Sun, Moon, and planets.', 'Ephemeris responses are validated before use and cached to keep subsequent requests lightweight.', 'Fallback data is never presented as live data; provenance remains visible in the results.', 'Observer location, timezone, and topocentric visualization are applied when required.'],
+    tech: ['Next.js App Router, React, TypeScript, and Tailwind CSS.', 'Luxon, SunCalc, tz-lookup, Leaflet, and OpenStreetMap.', 'Stellarium Web Engine for interactive sky visualization.', 'Three.js and React Three Fiber for Solar System visualization.', 'Vitest for computational function testing.'],
+    license: 'Stellarium Web Engine is used under the AGPL license. Map data is provided by OpenStreetMap. Every component retains the rights and attribution required by its source license.',
+    creator: 'DESIGNED AND DEVELOPED BY', degree: 'A Bachelor of Data Science thesis project',
+    thesis: '“COMPUTATIONAL HISAB FOR PREDICTING THE START OF RAMADAN BASED ON NASA JPL HORIZONS EPHEMERIS DATA USING THE NEWTON-RAPHSON ALGORITHM”',
+    footer: 'INTERNATIONAL ASTRONOMICAL STUDIES · SYSTEM DOCUMENTATION',
+  },
+} as const;
 
 export default function AboutPage() {
-  const { t } = useI18n();
-
+  const { locale } = useI18n();
+  const c = COPY[locale];
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">{t.aboutTitle}</h1>
-
-      <div className="glass-card p-6 mb-6">
-        <p className="text-slate-300 leading-relaxed mb-6">{t.aboutText}</p>
-
-        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
-          <h3 className="font-bold text-yellow-300 mb-2">AGPL License Notice</h3>
-          <p className="text-yellow-200/80 text-sm">{t.agplNote}</p>
-        </div>
-
-        <div className="space-y-4">
-          <Section title="Methodology">
-            <ul className="list-disc list-inside text-slate-400 space-y-1 text-sm">
-              <li>Muhammadiyah Wujudul Hilal criterion (conjunction before sunset + Moon altitude {'>'} 0°)</li>
-              <li>Conjunction computed via Newton–Raphson on ecliptic longitude difference (ObsEcLon)</li>
-              <li>Central difference derivative with δ=60s</li>
-              <li>Convergence: |f| {'<'} 1e-6° AND |step| {'<'} 0.2s</li>
-              <li>Bisection validation when bracket available</li>
-              <li>Scan step: 6 hours</li>
-            </ul>
-          </Section>
-
-          <Section title="Data Source">
-            <ul className="list-disc list-inside text-slate-400 space-y-1 text-sm">
-              <li>NASA/JPL HORIZONS API (https://ssd.jpl.nasa.gov/api/horizons.api)</li>
-              <li>Sun: COMMAND=&apos;10&apos;, Moon: COMMAND=&apos;301&apos;</li>
-              <li>Geocentric ecliptic longitude (QUANTITIES=&apos;31&apos;) for conjunction</li>
-              <li>Topocentric AZ/EL (QUANTITIES=&apos;4&apos;) for sunset check</li>
-            </ul>
-          </Section>
-
-          <Section title="Technology Stack">
-            <ul className="list-disc list-inside text-slate-400 space-y-1 text-sm">
-              <li>Next.js (App Router) + TypeScript</li>
-              <li>TailwindCSS</li>
-              <li>pnpm</li>
-              <li>luxon (datetime), suncalc (sunset), tz-lookup (timezone)</li>
-              <li>Stellarium Web Engine (AGPL) for sky visualization</li>
-              <li>vitest for testing</li>
-            </ul>
-          </Section>
-
-          <Section title="Credits">
-            <div className="text-slate-400 text-sm">
-              <p className="font-semibold text-slate-200">Skripsi S1 Muhammad Reinaldy Santoso Alaratte</p>
-              <p className="font-semibold text-slate-200">KKC DEV</p>
-              <p className="mt-2">
-                &quot;Komputasi hisab prediksi Awal Ramadan Berbasis data Ephemeris NASA JPL Horizons
-                Menggunakan Algoritma Newton–Raphson&quot;
-              </p>
-            </div>
-          </Section>
-        </div>
-      </div>
+    <div className={styles.page}>
+      <div className={styles.backdrop} aria-hidden="true" /><div className={styles.grid} aria-hidden="true" />
+      <header className={styles.topbar}><div className={styles.brand}>IAST <span>/ ABOUT THE SYSTEM</span></div><div className={styles.status}><i />{c.status}</div></header>
+      <main className={styles.content}>
+        <section className={styles.hero}>
+          <div><p className={styles.eyebrow}>{c.eyebrow}</p><h1>{c.title}<em>{c.subtitle}</em></h1><p className={styles.lead}>{c.lead}</p></div>
+          <aside className={styles.identity}><small>{c.identity} / IAST</small><b>International<br />Astronomical Studies</b><p>{c.project}</p></aside>
+        </section>
+        <section className={styles.missionGrid}>{c.modules.map((module, index) => <article className={styles.missionCard} key={module[0]}><span>0{index + 1} / MODULE</span><i>{['◒', '☾', '✦'][index]}</i><h2>{module[0]}</h2><p>{module[1]}</p></article>)}</section>
+        <div className={styles.sectionHead}>{c.methodHead}</div>
+        <section className={styles.detailGrid}><Detail title={locale === 'id' ? 'Metodologi Astronomi' : 'Astronomical Methodology'} items={c.methods} /><Detail title={locale === 'id' ? 'Sumber Ephemeris' : 'Ephemeris Sources'} items={c.data} /></section>
+        <div className={styles.sectionHead}>{c.techHead}</div>
+        <section className={styles.detailGrid}><Detail title={locale === 'id' ? 'Arsitektur Sistem' : 'System Architecture'} items={c.tech} /><div><div className={styles.notice}><b>{c.licenseHead}</b><p>{c.license}</p></div></div></section>
+        <div className={styles.sectionHead}>05 / {locale === 'id' ? 'PENGEMBANG' : 'DEVELOPER'}</div>
+        <section className={styles.credits}><div className={styles.monogram}>MR</div><div><small>{c.creator}</small><h2>Muhammad Reinaldy Santoso Alaratte</h2><p>{c.degree}</p><blockquote>{c.thesis}</blockquote></div></section>
+        <footer className={styles.footer}><span>{c.footer}</span><b>KKCDEV</b></footer>
+      </main>
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h3 className="font-bold text-slate-200 mb-2">{title}</h3>
-      {children}
-    </section>
-  );
+function Detail({ title, items }: { title: string; items: readonly string[] }) {
+  return <article className={styles.detail}><h3>{title}</h3><ul>{items.map(item => <li key={item}>{item}</li>)}</ul></article>;
 }

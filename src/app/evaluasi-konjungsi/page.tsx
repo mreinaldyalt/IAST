@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import styles from '../ramadan.module.css';
 import type { ConjunctionRow, DataSource } from '@/app/api/konjungsi-periode/route';
 import KonjungsiAuditPanel from '@/components/audit/KonjungsiAuditPanel';
 import DownloadMenu from '@/components/audit/DownloadMenu';
@@ -122,7 +123,7 @@ function DataSourceBadge({ source }: { source: DataSource | null }) {
 /* ------------------------------------------------------------------ */
 
 export default function EvaluasiKonjungsiPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   // ── Year inputs — empty by default, no auto-fill ──
   const [fromYear, setFromYear] = useState<number | ''>('');
@@ -331,24 +332,32 @@ export default function EvaluasiKonjungsiPage() {
   }
 
   return (
-    <div className="max-w-full px-4 py-8">
+    <div className={styles.page}>
+      <header className={styles.topbar}>
+        <div className={styles.brand}>IAST <span>/ RAMADAN RESEARCH</span></div>
+        <div className={styles.status}><i /> NASA JPL HORIZONS</div>
+      </header>
+      <div className={styles.content}>
+        <section className={styles.hero}>
+          <p className={styles.eyebrow}>{locale === 'id' ? 'Audit Siklus Sinodis · 02' : 'Synodic Cycle Audit · 02'}</p>
+          <h1>{t.conjEvalTitle}<em>{locale === 'id' ? 'Jejak Konjungsi dan Validasi Ephemeris' : 'Conjunction Trace and Ephemeris Validation'}</em></h1>
+          <p className={styles.heroCopy}>{t.conjEvalDesc}</p>
+          <div className={styles.heroMeta}>
+            <span>Multi-year Scan</span><span>{locale === 'id' ? 'Validasi Astronomi' : 'Astronomical Validation'}</span><span>Rule A / B</span><span>Audit Trail</span>
+          </div>
+        </section>
 
-      {/* Title */}
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-2">
-        {t.conjEvalTitle}
-      </h1>
-      <p className="text-slate-400 text-sm mb-6 max-w-3xl leading-relaxed">
-        {t.conjEvalDesc}
-      </p>
+        <div className={styles.workspace}>
 
       {/* Academic note */}
-      <div className="mb-6 p-3 rounded-lg bg-amber-900/20 border border-amber-500/30 max-w-3xl">
-        <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">{t.conjEvalNote}: </span>
-        <span className="text-xs text-amber-200/80">{t.conjEvalNoteText}</span>
+      <div className={styles.noticePanel}>
+        <span className={styles.noticeIcon}>i</span>
+        <b>{t.conjEvalNote}</b>
+        <p>{t.conjEvalNoteText}</p>
       </div>
 
       {/* Form */}
-      <div className="glass-card p-6 mb-6 max-w-2xl">
+      <div className={`${styles.controlPanel} glass-card p-6 mb-6 max-w-2xl`}>
         <div className="grid grid-cols-2 gap-4 mb-1">
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">{t.conjEvalFromYear}</label>
@@ -928,6 +937,8 @@ export default function EvaluasiKonjungsiPage() {
           </p>
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 }

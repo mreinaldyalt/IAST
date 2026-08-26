@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { useRouter } from 'next/navigation';
+import styles from '../ramadan.module.css';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -149,7 +150,7 @@ function ReadOnlyWitnessMap({ lat, lon, name }: { lat: number; lon: number; name
 /* ------------------------------------------------------------------ */
 
 export default function HomePage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
 
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -194,15 +195,29 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent mb-6">
-        {t.khgtTitle ?? 'Prediksi Ramadhan - Kalender Hijriah Global Tunggal (KHGT)'}
-      </h1>
+    <div className={styles.page}>
+      <header className={styles.topbar}>
+        <div className={styles.brand}>IAST <span>/ RAMADAN RESEARCH</span></div>
+        <div className={styles.status}><i /> NASA JPL HORIZONS</div>
+      </header>
+      <div className={styles.content}>
+        <section className={styles.hero}>
+          <p className={styles.eyebrow}>{locale === 'id' ? 'Komputasi Kalender Hijriah · 01' : 'Hijri Calendar Computation · 01'}</p>
+          <h1>{t.menu1 ?? 'Prediksi Ramadan'}<em>{locale === 'id' ? 'Kalender Hijriah Global Tunggal' : 'Unified Global Hijri Calendar'}</em></h1>
+          <p className={styles.heroCopy}>
+            {t.khgtDesc ?? 'Menentukan awal Ramadan melalui konjungsi, ketinggian Bulan, elongasi, dan evaluasi saksi global berbasis ephemeris NASA/JPL Horizons.'}
+          </p>
+          <div className={styles.heroMeta}>
+            <span>Newton–Raphson</span><span>KHGT</span><span>NASA Ephemeris</span><span>{locale === 'id' ? 'Pemindaian Global' : 'Global Scan'}</span>
+          </div>
+        </section>
+
+        <div className={styles.workspace}>
 
       {/* Form \u2014 year only */}
-      <div className="glass-card p-6 mb-8">
+      <div className={`${styles.controlPanel} glass-card p-6 mb-8`}>
         <label className="block text-sm font-medium text-slate-300 mb-1">{t.targetYear}</label>
-        <div className="flex gap-3 items-end">
+        <div className={styles.primaryControlRow}>
           <input
             type="number"
             value={year}
@@ -462,6 +477,8 @@ export default function HomePage() {
           </p>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

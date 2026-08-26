@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from './I18nProvider';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import styles from './AppShell.module.css';
 
 const SIDEBAR_KEY = 'sidebar-open';
 const RAMADAN_HREFS = ['/prediksi-ramadan', '/evaluasi-konjungsi', '/evaluasi'];
@@ -38,12 +39,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
     return true;
   });
-  const [sidebarSpaceReserved, setSidebarSpaceReserved] = useState(open);
-  const [desktopMotion, setDesktopMotion] = useState<'idle' | 'preparing' | 'opening' | 'closing'>('idle');
   const [isMobile, setIsMobile] = useState(false);
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openFrameRef = useRef<number | null>(null);
-  const secondOpenFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -56,70 +52,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     localStorage.setItem(SIDEBAR_KEY, String(open));
   }, [open]);
 
-  const closeSidebar = useCallback(() => {
-    if (openFrameRef.current !== null) {
-      cancelAnimationFrame(openFrameRef.current);
-      openFrameRef.current = null;
-    }
-    if (collapseTimerRef.current !== null) clearTimeout(collapseTimerRef.current);
-    if (secondOpenFrameRef.current !== null) {
-      cancelAnimationFrame(secondOpenFrameRef.current);
-      secondOpenFrameRef.current = null;
-    }
-    setOpen(false);
-    if (isMobile) {
-      setSidebarSpaceReserved(false);
-      setDesktopMotion('idle');
-      return;
-    }
-    // FLIP: konten bergeser ke kiri bersamaan dengan sidebar. Saat ruang flex
-    // dilepas, transform dinolkan tanpa mengubah posisi visualnya.
-    setDesktopMotion('closing');
-    collapseTimerRef.current = setTimeout(() => {
-      setSidebarSpaceReserved(false);
-      setDesktopMotion('idle');
-      collapseTimerRef.current = null;
-    }, 200);
-  }, [isMobile]);
-
-  const openSidebar = useCallback(() => {
-    if (collapseTimerRef.current !== null) {
-      clearTimeout(collapseTimerRef.current);
-      collapseTimerRef.current = null;
-    }
-    if (isMobile) {
-      setSidebarSpaceReserved(false);
-      setOpen(true);
-      return;
-    }
-    // Sisakan ruang sambil mengompensasi posisi konten, kemudian animasikan
-    // sidebar dan konten pada compositor yang sama.
-    setSidebarSpaceReserved(true);
-    setDesktopMotion('preparing');
-    openFrameRef.current = requestAnimationFrame(() => {
-      secondOpenFrameRef.current = requestAnimationFrame(() => {
-        setOpen(true);
-        setDesktopMotion('opening');
-        openFrameRef.current = null;
-        secondOpenFrameRef.current = null;
-        collapseTimerRef.current = setTimeout(() => {
-          setDesktopMotion('idle');
-          collapseTimerRef.current = null;
-        }, 200);
-      });
-    });
-  }, [isMobile]);
-
-  const toggleSidebar = useCallback(() => {
-    if (open) closeSidebar();
-    else openSidebar();
-  }, [open, closeSidebar, openSidebar]);
-
-  useEffect(() => () => {
-    if (collapseTimerRef.current !== null) clearTimeout(collapseTimerRef.current);
-    if (openFrameRef.current !== null) cancelAnimationFrame(openFrameRef.current);
-    if (secondOpenFrameRef.current !== null) cancelAnimationFrame(secondOpenFrameRef.current);
-  }, []);
+  /**
+   * Sidebar memakai layout "push": lebar <aside> dan padding-kiri <main>
+   * dianimasikan langsung, jadi <main> tidak pernah digeser dengan transform.
+   *
+   * Kenapa bukan transform: transform tidak mengubah UKURAN elemen. Versi lama
+   * menggeser <main> ke kiri 200px sementara lebarnya masih ukuran lama, jadi
+   * tepi kanannya mundur 1920→1720 dan menyisakan lubang 200px selama animasi,
+   * lalu tertutup mendadak dalam satu frame (terlihat sebagai "kedip"). Dengan
+   * menganimasikan ukuran aslinya, lebar <main> selalu = sisa ruang di sebelah
+   * <aside>, sehingga tepi kanannya tidak pernah bergerak dan celah itu mustahil
+   * muncul. Konsekuensinya animasi ini memicu layout tiap frame (bukan
+   * compositor saja) — itu harga wajib untuk push tanpa celah.
+   */
+  const closeSidebar = useCallback(() => setOpen(false), []);
+  const openSidebar = useCallback(() => setOpen(true), []);
+  const toggleSidebar = useCallback(() => setOpen((o) => !o), []);
 
   // Close sidebar on mobile when navigating
   useEffect(() => {
@@ -139,7 +87,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const isFullBleed = pathname === '/stellarium' || pathname === '/solar-system';
-  const hasDedicatedBackdrop = pathname === '/astronomy-event' || pathname === '/parade-planet' || pathname === '/gerhana' || pathname === '/';
+  const hasDedicatedBackdrop = pathname === '/astronomy-event' || pathname === '/parade-planet' || pathname === '/gerhana' || RAMADAN_HREFS.includes(pathname) || pathname === '/about' || pathname === '/';
 
   const ramadhanChildren = [
     { href: '/prediksi-ramadan', label: t.menu1 },
@@ -167,31 +115,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`flex-shrink-0 h-full z-40 ${
-          sidebarSpaceReserved ? 'w-64' : 'w-0'
-        } ${isMobile ? 'fixed left-0 top-0' : 'relative'}`}
+        className={`flex-shrink-0 h-full z-40 ${open ? 'w-64' : 'w-0'} ${
+          isMobile ? 'fixed left-0 top-0' : `relative ${styles.asideAnim}`
+        }`}
       >
         <div
-          className={`h-full w-64 bg-[#0b1026]/[0.98] border-r border-white/[0.08] flex flex-col overflow-hidden transition-transform duration-200 ease-out transform-gpu will-change-transform [contain:paint] ${
+          className={`${styles.panel} h-full w-64 flex flex-col overflow-hidden transition-transform duration-200 ease-out transform-gpu will-change-transform [contain:paint] ${
             open ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-gradient-to-r from-indigo-950/60 to-purple-950/40">
-            <span className="text-sm font-bold tracking-tight truncate">
-              {t.siteName}
-            </span>
+          <div className={`${styles.header} flex items-center justify-between`}>
+            <div className={styles.brandWrap}>
+              <span className={styles.brandMark}>IAST</span>
+              <span className={styles.brandText}><b>{t.siteName}</b><span>{locale === 'id' ? 'Sistem Riset Astronomi' : 'Astronomy Research System'}</span></span>
+            </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={toggleLocale}
-                className="px-2 py-0.5 bg-white/15 hover:bg-white/25 rounded text-xs font-bold transition"
+                className={styles.lang}
                 title={locale === 'en' ? 'Switch to Bahasa Indonesia' : 'Switch to English'}
               >
                 {t.langToggle}
               </button>
               <button
                 onClick={toggleSidebar}
-                className="p-1 hover:bg-white/15 rounded transition"
+                className={styles.close}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -201,13 +150,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto py-2">
+          <nav className={`${styles.nav} flex-1 overflow-y-auto`}>
+            <p className={styles.navLabel}>{locale === 'id' ? 'Navigasi Sistem' : 'System Navigation'}</p>
             <Link
               href="/"
-              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+              className={`${styles.item} ${
                 pathname === '/'
-                  ? 'bg-indigo-600/30 text-indigo-200 border-r-2 border-indigo-400'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+                  ? styles.active
+                  : ''
               }`}
             >
               <span className="w-4 text-center flex-shrink-0" aria-hidden="true">◫</span>
@@ -217,29 +167,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 1 — Peristiwa Astronomi (grup collapsible: Kalender + Parade) */}
             <button
               onClick={() => setPeristiwaOpen((o) => !o)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                PERISTIWA_HREFS.includes(pathname) ? 'text-indigo-200' : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+              className={`${styles.item} ${styles.groupButton} ${
+                PERISTIWA_HREFS.includes(pathname) ? styles.active : ''
               }`}
               aria-expanded={peristiwaOpen}
             >
               <IconMoonStar />
               <span className="flex-1 text-left">{t.astronomyEventMenu}</span>
               <svg
-                className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${peristiwaOpen ? 'rotate-90' : ''}`}
+                className={`${styles.chevron} w-4 h-4 flex-shrink-0 ${peristiwaOpen ? 'rotate-90' : ''}`}
                 fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
-            <div className={`overflow-hidden transition-all duration-200 ${peristiwaOpen ? 'max-h-40' : 'max-h-0'}`}>
+            <div className={`${styles.childWrap} overflow-hidden transition-all duration-200 ${peristiwaOpen ? 'max-h-40' : 'max-h-0'}`}>
               {peristiwaChildren.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 pl-11 pr-4 py-2 text-sm transition-colors ${
+                  className={`${styles.item} ${styles.child} ${
                     pathname === item.href
-                      ? 'bg-indigo-600/30 text-indigo-200 border-r-2 border-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                      ? styles.active
+                      : ''
                   }`}
                 >
                   <span>{item.label}</span>
@@ -250,31 +200,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 2 — Ramadan (grup collapsible) */}
             <button
               onClick={() => setRamadanOpen((o) => !o)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                RAMADAN_HREFS.includes(pathname) ? 'text-indigo-200' : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+              className={`${styles.item} ${styles.groupButton} ${
+                RAMADAN_HREFS.includes(pathname) ? styles.active : ''
               }`}
               aria-expanded={ramadanOpen}
             >
               <IconCrescent />
               <span className="flex-1 text-left">{t.ramadhanMenu}</span>
               <svg
-                className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${ramadanOpen ? 'rotate-90' : ''}`}
+                className={`${styles.chevron} w-4 h-4 flex-shrink-0 ${ramadanOpen ? 'rotate-90' : ''}`}
                 fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
             <div
-              className={`overflow-hidden transition-all duration-200 ${ramadanOpen ? 'max-h-60' : 'max-h-0'}`}
+              className={`${styles.childWrap} overflow-hidden transition-all duration-200 ${ramadanOpen ? 'max-h-60' : 'max-h-0'}`}
             >
               {ramadhanChildren.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 pl-11 pr-4 py-2 text-sm transition-colors ${
+                  className={`${styles.item} ${styles.child} ${
                     pathname === item.href
-                      ? 'bg-indigo-600/30 text-indigo-200 border-r-2 border-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                      ? styles.active
+                      : ''
                   }`}
                 >
                   <span>{item.label}</span>
@@ -285,10 +235,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 3 — Stellarium View */}
             <Link
               href="/stellarium"
-              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+              className={`${styles.item} ${
                 pathname === '/stellarium'
-                  ? 'bg-indigo-600/30 text-indigo-200 border-r-2 border-indigo-400'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+                  ? styles.active
+                  : ''
               }`}
             >
               <IconStars />
@@ -298,10 +248,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 4 — Solar System */}
             <Link
               href="/solar-system"
-              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+              className={`${styles.item} ${
                 pathname === '/solar-system'
-                  ? 'bg-indigo-600/30 text-indigo-200 border-r-2 border-indigo-400'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+                  ? styles.active
+                  : ''
               }`}
             >
               <IconOrbit />
@@ -311,10 +261,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* 5 — Tentang */}
             <Link
               href="/about"
-              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+              className={`${styles.item} ${
                 pathname === '/about'
-                  ? 'bg-indigo-600/30 text-indigo-200 border-r-2 border-indigo-400'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+                  ? styles.active
+                  : ''
               }`}
             >
               <IconInfo />
@@ -323,17 +273,39 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* AGPL Notice */}
-          <div className="px-4 py-3 border-t border-white/5">
-            <p className="text-[9px] text-white/20 leading-relaxed">{t.agplNote}</p>
+          <div className={styles.footer}>
+            <b>IAST / LICENSE</b>
+            <p>{t.agplNote}</p>
           </div>
         </div>
+
+        {!open && !isMobile && (
+          <div className={styles.collapsedRail}>
+            <svg className={styles.railShape} viewBox="0 0 56 1000" preserveAspectRatio="none" aria-hidden="true">
+              <path className={styles.railFill} d="M0 0H55V150C55 164 43 169 43 184V285C43 300 55 305 55 320V505C55 520 43 525 43 540V641C43 656 55 661 55 676V1000H0Z" />
+              <path className={styles.railStroke} d="M55 0V150C55 164 43 169 43 184V285C43 300 55 305 55 320V505C55 520 43 525 43 540V641C43 656 55 661 55 676V1000" />
+            </svg>
+            <button type="button" onClick={openSidebar} className={styles.railToggle} aria-label={locale === 'id' ? 'Buka navigasi' : 'Open navigation'}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span className={styles.railBrand}>IAST</span>
+            <div className={styles.railLabels} aria-hidden="true">
+              <span>{locale === 'id' ? 'PERISTIWA' : 'EVENTS'}</span><i />
+              <span>RAMADAN</span><i />
+              <span>{locale === 'id' ? 'LANGIT' : 'SKY'}</span>
+            </div>
+            <small>KKCDEV</small>
+          </div>
+        )}
       </aside>
 
       {/* Hamburger (when sidebar closed) */}
-      {!open && (
+      {!open && isMobile && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-3 left-3 z-50 p-2 bg-[#0b1026]/80 hover:bg-[#0b1026] rounded-lg text-white transition backdrop-blur-xl border border-white/[0.08]"
+          className={`${styles.hamburger} fixed top-3 left-3 z-50 p-2 transition`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -344,13 +316,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main
         className={`flex-1 min-w-0 overflow-auto relative z-[1] ${
-          !isMobile && desktopMotion === 'closing' ? 'transition-transform duration-200 ease-out transform-gpu -translate-x-64' : ''
+          !isMobile ? `${styles.mainPad} ${open ? '' : styles.mainUnderRail}` : ''
         } ${
-          !isMobile && desktopMotion === 'preparing' ? '-translate-x-64' : ''
-        } ${
-          !isMobile && desktopMotion === 'opening' ? 'transition-transform duration-200 ease-out transform-gpu translate-x-0' : ''
-        } ${
-          isFullBleed ? 'p-0 overflow-hidden' : ''
+          isFullBleed ? 'overflow-hidden' : ''
         }`}
       >
         {children}

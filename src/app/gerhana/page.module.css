@@ -17,7 +17,7 @@
   background:
     linear-gradient(90deg, rgba(2, 5, 12, .97) 0%, rgba(3, 8, 20, .76) 38%, rgba(5, 7, 15, .54) 64%, rgba(3, 5, 10, .88) 100%),
     linear-gradient(180deg, rgba(2, 5, 12, .2), #05070d 100%),
-    url('/bg/peristiwa.jpg') center top / cover no-repeat;
+    url('/bg/peristiwa.webp') center top / cover no-repeat;
 }
 
 .backdrop::after {

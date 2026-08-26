@@ -19,7 +19,7 @@ const MODULES = [
 
 const COPY = {
   id: {
-    lab: 'PLATFORM RISET ASTRONOMI ISLAM', status: 'SISTEM SIAP', logo: 'TEMPAT LOGO', logoHint: 'SIAP DIGANTI',
+    lab: 'PLATFORM RISET ASTRONOMI INTERNASIONAL', status: 'SISTEM SIAP', logo: 'TEMPAT LOGO', logoHint: 'SIAP DIGANTI',
     eyebrow: 'KOMPUTASI · EPHEMERIS · VISUALISASI', acronym: 'IAST', systemLabel: 'SISTEM RISET', projectCode: 'SD / 01',
     intro: 'Satu ruang komputasi untuk menjelajahi peristiwa astronomi, hisab awal Ramadan, evaluasi konjungsi, dan visualisasi langit berbasis data ilmiah.',
     explore: 'JELAJAHI MODUL', prediction: 'BUKA PREDIKSI RAMADAN', modules: 'MODUL TERINTEGRASI', data: 'DATA NASA/JPL', languages: 'DUA BAHASA',
@@ -40,7 +40,7 @@ const COPY = {
     },
   },
   en: {
-    lab: 'INTERNATIONAL ASTRONOMY RESEARCH PLATFORM', status: 'SYSTEM READY', logo: 'LOGO PLACEHOLDER', logoHint: 'READY TO REPLACE',
+    lab: 'INTERNATIONAL ASTRONOMICAL RESEARCH PLATFORM', status: 'SYSTEM READY', logo: 'LOGO PLACEHOLDER', logoHint: 'READY TO REPLACE',
     eyebrow: 'COMPUTATION · EPHEMERIS · VISUALIZATION', acronym: 'IAST', systemLabel: 'RESEARCH SYSTEM', projectCode: 'DS / 01',
     intro: 'A unified computational space for exploring astronomical events, the start of Ramadan, conjunction evaluation, and scientific sky visualization.',
     explore: 'EXPLORE MODULES', prediction: 'OPEN RAMADAN PREDICTION', modules: 'INTEGRATED MODULES', data: 'NASA/JPL DATA', languages: 'TWO LANGUAGES',

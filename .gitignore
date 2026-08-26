@@ -39,3 +39,7 @@ next-env.d.ts
 # Local-only reference material, not part of the deployed app
 /Google Colab/
 Git Repo.txt
+
+# Manual working-tree snapshots (e.g. "codex26") — restore points requested
+# by the project owner during UI rework, never meant to be committed.
+/_backups/

@@ -1,0 +1,502 @@
+.page {
+  position: relative;
+  min-height: 100%;
+  overflow-x: clip;
+  isolation: isolate;
+  color: #f5fbfb;
+  background: #05090c;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.backdrop {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -2;
+  height: min(1000px, 100vh);
+  background:
+    linear-gradient(
+      100deg,
+      rgba(3, 7, 10, 0.97),
+      rgba(5, 12, 16, 0.78) 52%,
+      rgba(4, 8, 11, 0.88)
+    ),
+    linear-gradient(180deg, transparent 55%, #05090c 100%),
+    url("/bg/dashboard.webp") center/cover no-repeat;
+}
+.grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.13;
+  background-image:
+    linear-gradient(rgba(207, 237, 239, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(207, 237, 239, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(#000, transparent 70%);
+}
+.topbar {
+  min-height: 64px;
+  padding: 0 clamp(18px, 4vw, 62px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(207, 236, 238, 0.15);
+  background: rgba(3, 8, 11, 0.88);
+}
+.brand {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.26em;
+}
+.brand span {
+  margin-left: 12px;
+  color: #80979d;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9bafb4;
+  font-size: 8px;
+  letter-spacing: 0.17em;
+}
+.status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #76efca;
+  box-shadow: 0 0 11px #76efca;
+}
+.content {
+  width: min(1380px, 100%);
+  margin: 0 auto;
+  padding: clamp(46px, 6vw, 82px) clamp(15px, 4vw, 60px) 82px;
+}
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(310px, 0.75fr);
+  gap: clamp(30px, 6vw, 88px);
+  align-items: end;
+  margin-bottom: 52px;
+}
+.eyebrow {
+  margin: 0 0 15px;
+  color: #82dde3;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+.hero h1 {
+  margin: 0;
+  font-size: clamp(54px, 7vw, 104px);
+  font-weight: 300;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+.hero h1 em {
+  display: block;
+  margin-top: 13px;
+  color: #9be2e3;
+  font-size: 0.34em;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+.lead {
+  max-width: 760px;
+  margin: 25px 0 0;
+  color: #a9babd;
+  font-size: 13px;
+  line-height: 1.75;
+}
+.identity {
+  position: relative;
+  padding: 27px;
+  border: 1px solid rgba(215, 240, 241, 0.28);
+  background: linear-gradient(
+    145deg,
+    rgba(17, 31, 34, 0.9),
+    rgba(5, 12, 15, 0.88)
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 27px) 0,
+    100% 27px,
+    100% 100%,
+    20px 100%,
+    0 calc(100% - 20px)
+  );
+}
+.identity::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 28px;
+  height: 28px;
+  border-left: 2px solid #b7e8e9;
+  border-top: 2px solid #b7e8e9;
+  opacity: 0.65;
+}
+.identity small {
+  display: block;
+  color: #75d8dd;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+.identity b {
+  display: block;
+  margin: 36px 0 8px;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.05;
+}
+.identity p {
+  margin: 0;
+  color: #82999d;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.missionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 42px;
+}
+.missionCard {
+  position: relative;
+  min-height: 205px;
+  padding: 23px;
+  border: 1px solid rgba(208, 236, 238, 0.16);
+  background: rgba(5, 13, 16, 0.86);
+  overflow: hidden;
+}
+.missionCard::after {
+  content: "";
+  position: absolute;
+  right: -48px;
+  bottom: -58px;
+  width: 135px;
+  height: 135px;
+  border: 1px solid rgba(112, 215, 221, 0.14);
+  border-radius: 50%;
+}
+.missionCard span {
+  color: #70878c;
+  font-size: 7px;
+  letter-spacing: 0.18em;
+}
+.missionCard i {
+  display: block;
+  margin: 28px 0 20px;
+  color: #98e6e8;
+  font-size: 28px;
+  font-style: normal;
+}
+.missionCard h2 {
+  margin: 0 0 9px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.missionCard p {
+  margin: 0;
+  color: #7f959a;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin: 42px 0 18px;
+  color: #7cdae0;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.23em;
+  text-transform: uppercase;
+}
+.sectionHead::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: rgba(210, 238, 240, 0.16);
+}
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.detail {
+  padding: 23px;
+  border: 1px solid rgba(210, 238, 240, 0.16);
+  background: linear-gradient(
+    145deg,
+    rgba(13, 25, 29, 0.92),
+    rgba(5, 11, 14, 0.92)
+  );
+}
+.detail h3 {
+  margin: 0 0 15px;
+  color: #e8f5f5;
+  font-size: 16px;
+  font-weight: 500;
+}
+.detail ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.detail li {
+  position: relative;
+  padding-left: 16px;
+  color: #91a6aa;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.detail li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border: 1px solid #83dce0;
+  transform: rotate(45deg);
+}
+.notice {
+  position: relative;
+  margin-top: 10px;
+  padding: 20px 22px 20px 60px;
+  border: 1px solid rgba(232, 202, 120, 0.32);
+  border-left: 2px solid #e7c56c;
+  background: linear-gradient(
+    100deg,
+    rgba(66, 49, 14, 0.28),
+    rgba(10, 15, 16, 0.9)
+  );
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+.notice::before {
+  content: "i";
+  position: absolute;
+  left: 21px;
+  top: 20px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e7c56c;
+  border-radius: 50%;
+  color: #efd687;
+  font:
+    700 12px Georgia,
+    serif;
+}
+.notice b {
+  display: block;
+  margin-bottom: 6px;
+  color: #efd687;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.notice p {
+  margin: 0;
+  color: #b7aa84;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.credits {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 25px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid rgba(210, 238, 240, 0.2);
+  background: rgba(6, 14, 17, 0.88);
+}
+.monogram {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #8ddfe2;
+  border-radius: 50%;
+  color: #d9f5f5;
+  font-size: 26px;
+  letter-spacing: 0.12em;
+  box-shadow: inset 0 0 30px rgba(106, 218, 223, 0.08);
+}
+.credits small {
+  color: #6fd8dd;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+.credits h2 {
+  margin: 9px 0 12px;
+  font-size: 27px;
+  font-weight: 400;
+}
+.credits p {
+  max-width: 760px;
+  margin: 0;
+  color: #8da2a6;
+  font-size: 10px;
+  line-height: 1.65;
+}
+.credits blockquote {
+  margin: 15px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(211, 239, 241, 0.13);
+  color: #c8d8da;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.footer {
+  margin-top: 42px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(210, 238, 240, 0.13);
+  display: flex;
+  justify-content: space-between;
+  color: #62777c;
+  font-size: 7px;
+  letter-spacing: 0.15em;
+}
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .identity {
+    max-width: 700px;
+  }
+  .missionGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 650px) {
+  .topbar {
+    min-height: 52px;
+    padding: 0 14px;
+  }
+  .brand {
+    font-size: 14px;
+  }
+  .brand span {
+    display: none;
+  }
+  .status {
+    font-size: 6px;
+  }
+  .content {
+    padding: 38px 9px 52px;
+  }
+  .hero {
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .eyebrow {
+    font-size: 6px;
+  }
+  .hero h1 {
+    font-size: clamp(39px, 12vw, 58px);
+  }
+  .hero h1 em {
+    font-size: 0.31em;
+    letter-spacing: 0.13em;
+  }
+  .lead {
+    margin-top: 17px;
+    font-size: 10px;
+  }
+  .identity {
+    padding: 20px;
+  }
+  .identity b {
+    margin-top: 28px;
+    font-size: 21px;
+  }
+  .missionGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .missionCard {
+    min-height: 145px;
+    padding: 13px 11px;
+  }
+  .missionCard i {
+    margin: 16px 0 12px;
+    font-size: 21px;
+  }
+  .missionCard h2 {
+    font-size: 11px;
+  }
+  .missionCard p {
+    font-size: 7px;
+  }
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+  .detail {
+    padding: 16px 13px;
+  }
+  .detail h3 {
+    font-size: 14px;
+  }
+  .detail li {
+    font-size: 8px;
+  }
+  .notice {
+    padding: 16px 12px 16px 48px;
+  }
+  .notice::before {
+    left: 14px;
+    top: 15px;
+  }
+  .credits {
+    grid-template-columns: 70px 1fr;
+    gap: 13px;
+    padding: 17px 13px;
+  }
+  .monogram {
+    width: 62px;
+    height: 62px;
+    font-size: 18px;
+  }
+  .credits h2 {
+    font-size: 18px;
+  }
+  .credits p,
+  .credits blockquote {
+    font-size: 8px;
+  }
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+@media (max-width: 380px) {
+  .missionGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .missionCard h2 {
+    font-size: 10px;
+  }
+  .credits {
+    grid-template-columns: 1fr;
+  }
+  .monogram {
+    width: 54px;
+    height: 54px;
+  }
+}

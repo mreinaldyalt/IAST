@@ -48,26 +48,36 @@ export default function SolarSystemView() {
   const num = (n: number) => n.toFixed(4);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#05070f]">
-      {/* near sangat kecil + logarithmicDepthBuffer: wajib karena mode Ilmiah
-          punya rentang skala ekstrem (radius planet terkecil ~2e-5 unit vs
-          orbit Neptunus 30 unit) — tanpa ini, near-plane default (mis. 0.1)
-          memotong/menghilangkan planet & Matahari begitu kamera zoom dekat. */}
-      <Canvas camera={{ fov: 45, position: [0, 60, 30], near: 0.00001, far: 4000 }} dpr={[1, 2]} gl={{ antialias: true, logarithmicDepthBuffer: true }}>
-        <SolarSystemScene
-          clockRef={clock.clockRef}
-          tick={clock.tick}
-          getBodiesAt={getBodiesAt}
-          mode={mode}
-          selectedId={selectedId}
-          onHover={setHoverId}
-          onSelect={setSelectedId}
-          resetSignal={resetSignal}
-          focusId={focusId}
-          localizeName={localizeName}
-          sunLabel={SUN_LABEL[locale]}
-        />
-      </Canvas>
+    <div className="h-full w-full">
+      {/* Lapisan scene 3D sengaja `absolute inset-0` (tanpa induk ber-`relative`)
+          supaya lolos dari padding rail AppShell dan mengisi layar penuh sampai
+          x=0 — persis seperti halaman Stellarium, sehingga rail navigasi tampak
+          mengambang di atas scene, bukan meninggalkan celah kosong di kirinya. */}
+      <div className="absolute inset-0 overflow-hidden bg-[#05070f]">
+        {/* near sangat kecil + logarithmicDepthBuffer: wajib karena mode Ilmiah
+            punya rentang skala ekstrem (radius planet terkecil ~2e-5 unit vs
+            orbit Neptunus 30 unit) — tanpa ini, near-plane default (mis. 0.1)
+            memotong/menghilangkan planet & Matahari begitu kamera zoom dekat. */}
+        <Canvas camera={{ fov: 45, position: [0, 60, 30], near: 0.00001, far: 4000 }} dpr={[1, 2]} gl={{ antialias: true, logarithmicDepthBuffer: true }}>
+          <SolarSystemScene
+            clockRef={clock.clockRef}
+            tick={clock.tick}
+            getBodiesAt={getBodiesAt}
+            mode={mode}
+            selectedId={selectedId}
+            onHover={setHoverId}
+            onSelect={setSelectedId}
+            resetSignal={resetSignal}
+            focusId={focusId}
+            localizeName={localizeName}
+            sunLabel={SUN_LABEL[locale]}
+          />
+        </Canvas>
+      </div>
+
+      {/* Lapisan UI tetap di aliran normal (menghormati padding rail), supaya
+          kartu info & panel kontrol tidak pernah tertimpa rail navigasi. */}
+      <div className="relative h-full w-full pointer-events-none">
 
       {/* Top-left: info sistem */}
       <div className="absolute top-3 left-3 z-20 glass-card px-4 py-3 max-w-[280px] pointer-events-none">
@@ -90,7 +100,7 @@ export default function SolarSystemView() {
 
       {/* Top-right: panel planet terpilih */}
       {selectedBody && (
-        <div className="absolute top-3 right-3 z-20 glass-card px-4 py-3 w-64">
+        <div className="absolute top-3 right-3 z-20 glass-card px-4 py-3 w-64 pointer-events-auto">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">{t.ssPlanet ?? 'Planet'}</p>
@@ -127,7 +137,7 @@ export default function SolarSystemView() {
 
       {/* Top-right: panel Matahari */}
       {selectedId === 'sun' && (
-        <div className="absolute top-3 right-3 z-20 glass-card px-4 py-3 w-64">
+        <div className="absolute top-3 right-3 z-20 glass-card px-4 py-3 w-64 pointer-events-auto">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">{t.ssPlanet ?? 'Body'}</p>
@@ -167,6 +177,7 @@ export default function SolarSystemView() {
         t={t}
         locale={locale}
       />
+      </div>
     </div>
   );
 }
