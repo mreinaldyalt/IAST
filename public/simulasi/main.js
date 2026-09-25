@@ -113,8 +113,7 @@ function frame(now) {
   cam.tz += (focus.z - cam.tz) * k;
 
   const B = basis();
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, view.W, view.H);
+  ctx.clearRect(0, 0, view.W, view.H);
   drawStars(B);
   drawGalacticCentre(B);
   resetLabels();
