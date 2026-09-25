@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#05090d">
+    <title>Simulasi Lintasan Planet | IAST</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <canvas id="view" tabindex="0" role="img" aria-label="Visualisasi interaktif lintasan Matahari dan planet"></canvas>
+
+    <header id="title">
+      <h1 id="title-main">LINTASAN PLANET</h1>
+      <p id="title-sub">MODEL GERAK JANGKA PANJANG</p>
+    </header>
+
+    <aside id="hud" aria-label="Status simulasi">
+      <div class="wm-small" id="model-label">IAST / MODEL VISUAL</div>
+      <div class="panel">
+        <div><span id="elapsed-label">Waktu simulasi</span><b id="elapsed">0.0 th</b></div>
+        <div><span id="travelled-label">Jarak tempuh Matahari</span><b id="travelled">0 AU</b></div>
+      </div>
+    </aside>
+
+    <button id="pause" type="button" aria-label="Jeda simulasi" title="Jeda simulasi">Ⅱ</button>
+    <button id="controls-btn" type="button" aria-expanded="false" aria-controls="sheet">PENGATURAN</button>
+
+    <section id="sheet" aria-label="Pengaturan simulasi" hidden>
+      <div class="sheet-head">
+        <span id="controls-title">PENGATURAN</span>
+        <button id="close" type="button" aria-label="Tutup pengaturan">×</button>
+      </div>
+
+      <label class="row" for="scale"><span id="scale-label">Skala waktu</span>
+        <input id="scale" type="range" min="-1" max="4" step="0.01" value="1.6">
+        <b id="scale-val">40 th/dtk</b>
+      </label>
+
+      <div class="row"><span id="mode-label">Mode tampilan</span>
+        <div id="modes" class="modes"></div>
+      </div>
+
+      <label class="row" for="speed"><span id="speed-label">Kecepatan Matahari di Bima Sakti</span>
+        <input id="speed" type="range" min="0" max="400" step="1" value="220">
+        <b id="speed-val">220 km/s</b>
+      </label>
+
+      <div class="toggles">
+        <label><input type="checkbox" id="t-trails" checked><span id="toggle-trails">Jejak lintasan</span></label>
+        <label><input type="checkbox" id="t-labels" checked><span id="toggle-labels">Label benda langit</span></label>
+        <label><input type="checkbox" id="t-stars" checked><span id="toggle-stars">Bintang latar</span></label>
+        <label><input type="checkbox" id="t-gc" checked><span id="toggle-gc">Pusat galaksi</span></label>
+        <label><input type="checkbox" id="t-dir" checked><span id="toggle-dir">Arah gerak Matahari</span></label>
+        <label><input type="checkbox" id="t-orbits" checked><span id="toggle-orbits">Garis orbit planet</span></label>
+      </div>
+
+      <p class="note" id="interaction-note">Seret untuk memutar pandangan, gulir untuk mengatur zoom, klik dua kali pada Matahari atau planet untuk mengikutinya. Skala lintasan galaksi disederhanakan.</p>
+    </section>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

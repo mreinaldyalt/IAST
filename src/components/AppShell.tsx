@@ -26,6 +26,9 @@ const IconInfo = () => (
 const IconOrbit = () => (
   <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" /><ellipse cx="12" cy="12" rx="10" ry="4.5" /></svg>
 );
+const IconTrajectory = () => (
+  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" /><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-32 12 12)" /><circle cx="19.2" cy="7.1" r="1.2" fill="currentColor" stroke="none" /></svg>
+);
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { t, locale, toggleLocale } = useI18n();
@@ -86,8 +89,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (PERISTIWA_HREFS.includes(pathname)) setPeristiwaOpen(true);
   }, [pathname]);
 
-  const isFullBleed = pathname === '/stellarium' || pathname === '/solar-system';
-  const hasDedicatedBackdrop = pathname === '/astronomy-event' || pathname === '/parade-planet' || pathname === '/gerhana' || RAMADAN_HREFS.includes(pathname) || pathname === '/about' || pathname === '/';
+  const isFullBleed = pathname === '/stellarium' || pathname === '/solar-system' || pathname === '/simulasi';
+  const hasDedicatedBackdrop = pathname === '/astronomy-event' || pathname === '/parade-planet' || pathname === '/gerhana' || RAMADAN_HREFS.includes(pathname) || pathname === '/about' || pathname === '/' || pathname === '/simulasi';
 
   const ramadhanChildren = [
     { href: '/prediksi-ramadan', label: t.menu1 },
@@ -256,6 +259,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               <IconOrbit />
               <span>{t.ssMenu}</span>
+            </Link>
+
+            <Link
+              href="/simulasi"
+              className={`${styles.item} ${pathname === '/simulasi' ? styles.active : ''}`}
+            >
+              <IconTrajectory />
+              <span>{locale === 'id' ? 'Simulasi' : 'Simulation'}</span>
             </Link>
 
             {/* 5 — Tentang */}
