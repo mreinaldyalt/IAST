@@ -85,6 +85,7 @@ export const INDEXABLE_ROUTES: { path: string; priority: number; changeFrequency
   { path: '/stellarium', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/solar-system', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/simulasi', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/metode', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/about', priority: 0.8, changeFrequency: 'monthly' },
 ];
 
