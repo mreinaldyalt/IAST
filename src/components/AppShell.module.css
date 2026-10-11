@@ -64,6 +64,14 @@
     0 calc(100% - 8px)
   );
 }
+/* Emblem logo asli di plat terang — plat dibutuhkan karena logo berwarna biru
+   tua (kurang kontras di atas latar gelap sidebar). */
+.brandMark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .brandText {
   min-width: 0;
 }

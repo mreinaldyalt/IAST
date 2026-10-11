@@ -107,6 +107,7 @@ export function buildJsonLd() {
         alternateName: [SITE_SHORT, SITE_NAME, 'Platform Riset Astronomi Internasional'],
         description: SITE_DESCRIPTION,
         inLanguage: ['id', 'en'],
+        image: `${SITE_URL}/brand/iast-logo.png`,
         author: { '@id': personId },
         publisher: { '@id': personId },
       },

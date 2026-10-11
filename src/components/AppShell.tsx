@@ -130,7 +130,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Header */}
           <div className={`${styles.header} flex items-center justify-between`}>
             <div className={styles.brandWrap}>
-              <span className={styles.brandMark}>IAST</span>
+              <span className={styles.brandMark}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/iast-emblem.webp" alt="IAST" width={42} height={42} decoding="async" />
+              </span>
               <span className={styles.brandText}><b>{t.siteName}</b><span>{locale === 'id' ? 'Sistem Riset Astronomi' : 'Astronomy Research System'}</span></span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">

@@ -89,8 +89,9 @@ export default function DashboardPage() {
           <div className={styles.heroMain}>
             <p className={styles.eyebrow}>{c.eyebrow}</p>
             <div className={styles.titleRow}>
-              <div className={styles.logoSlot} aria-label={c.logo}>
-                <span>{c.logo}</span><small>{c.logoHint}</small>
+              <div className={styles.logoSlot}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/iast-logo.webp" alt="Logo International Astronomical Studies (IAST)" width={138} height={149} decoding="async" fetchPriority="high" />
               </div>
               <div>
                 <h1>International Astronomical<br />Studies <em>[IAST]</em></h1>
